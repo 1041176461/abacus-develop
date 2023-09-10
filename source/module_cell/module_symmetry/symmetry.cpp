@@ -21,6 +21,7 @@ Symmetry::~Symmetry()
 
 
 int Symmetry::symm_flag = 0;
+bool Symmetry::symm_relax = false;
 bool Symmetry::symm_autoclose = false;
 
 

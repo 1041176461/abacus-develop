@@ -18,6 +18,7 @@ public:
 	//0 : only basic time-reversal symmetry is considered, point k and -k would fold to k
 	//1 : point group symmetry is considered
     static int symm_flag;
+	static bool symm_relax;
     static bool symm_autoclose;
 
 	void analy_sys(const UnitCell &ucell, std::ofstream &ofs_running);

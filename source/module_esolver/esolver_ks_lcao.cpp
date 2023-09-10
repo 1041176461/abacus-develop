@@ -73,7 +73,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     {
         ucell.read_pseudo(GlobalV::ofs_running);
 
-        if (ModuleSymmetry::Symmetry::symm_flag == 1)
+        if (ModuleSymmetry::Symmetry::symm_flag == 1 || ModuleSymmetry::Symmetry::symm_relax == 1)
         {
             this->symm.analy_sys(ucell, GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");

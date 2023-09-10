@@ -199,6 +199,7 @@ void Input::Default(void)
     symmetry = "default";
     init_vel = false;
     ref_cell_factor = 1.0;
+    symmetry_relax = false;
     symmetry_prec = 1.0e-5; // LiuXh add 2021-08-12, accuracy for symmetry
     symmetry_autoclose = false; // whether to close symmetry automatically when error occurs in symmetry analysis
     cal_force = 0;
@@ -872,6 +873,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("symmetry_prec", word) == 0) // LiuXh add 2021-08-12, accuracy for symmetry
         {
             read_value(ifs, symmetry_prec);
+        }
+        else if (strcmp("symmetry_relax", word) == 0)
+        {
+            read_value(ifs, symmetry_relax);
         }
         else if (strcmp("symmetry_autoclose", word) == 0)
         {
@@ -2843,6 +2848,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(init_vel); // liuyu 2021-07-14
     Parallel_Common::bcast_double(ref_cell_factor);
     Parallel_Common::bcast_double(symmetry_prec); // LiuXh add 2021-08-12, accuracy for symmetry
+    Parallel_Common::bcast_bool(symmetry_relax);
     Parallel_Common::bcast_bool(symmetry_autoclose);
     Parallel_Common::bcast_bool(cal_force);
     Parallel_Common::bcast_double(force_thr);

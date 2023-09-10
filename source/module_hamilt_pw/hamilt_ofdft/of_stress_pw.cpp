@@ -92,7 +92,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
         }
     }
 
-    if (ModuleSymmetry::Symmetry::symm_flag == 1)
+    if (ModuleSymmetry::Symmetry::symm_flag == 1 || ModuleSymmetry::Symmetry::symm_relax == 1)
     {
         p_symm->stress_symmetry(sigmatot, ucell);
     }

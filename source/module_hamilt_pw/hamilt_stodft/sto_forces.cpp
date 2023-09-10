@@ -105,7 +105,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
         GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
     }
 	
-	if(ModuleSymmetry::Symmetry::symm_flag == 1)
+	if(ModuleSymmetry::Symmetry::symm_flag == 1 || ModuleSymmetry::Symmetry::symm_relax == 1)
 	{
 		double *pos;
 		double d1,d2,d3;

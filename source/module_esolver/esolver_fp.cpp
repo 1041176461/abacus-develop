@@ -86,7 +86,7 @@ namespace ModuleESolver
         }
         this->pelec->omega = GlobalC::ucell.omega;
 
-        if(ModuleSymmetry::Symmetry::symm_flag == 1)
+        if(ModuleSymmetry::Symmetry::symm_flag == 1 || ModuleSymmetry::Symmetry::symm_relax == 1)
         {
             symm.analy_sys(cell, GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");

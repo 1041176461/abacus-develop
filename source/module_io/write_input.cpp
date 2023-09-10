@@ -61,6 +61,7 @@ void Input::Print(const std::string &fn) const
                                  nbands_istate,
                                  "number of bands around Fermi level for get_pchg calulation");
     ModuleBase::GlobalFunc::OUTP(ofs, "symmetry", symmetry, "the control of symmetry");
+    ModuleBase::GlobalFunc::OUTP(ofs, "symmetry_relax", symmetry_relax, "whether to maintain symmetry during structural optimization");
     ModuleBase::GlobalFunc::OUTP(ofs, "init_vel", init_vel, "read velocity from STRU or not");
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "symmetry_prec",
