@@ -44,7 +44,8 @@ void LRI_CV<Tdata>::set_orbitals(
     const double& kmesh_times,
     ORB_gaunt_table& MGT,
     const bool& init_MGT,
-    const bool& init_C) {
+    const bool& init_C,
+    const bool& init_Vr) {
     ModuleBase::TITLE("LRI_CV", "set_orbitals");
     ModuleBase::timer::tick("LRI_CV", "set_orbitals");
 
@@ -75,7 +76,10 @@ void LRI_CV<Tdata>::set_orbitals(
     int Lmax_c = std::numeric_limits<double>::min();
     if (init_C)
         this->m_abfslcaos_lcaos.init(1, orb, kmesh_times, lcaos_rmax, Lmax_c);
-    int Lmax = std::max(Lmax_v, Lmax_c);
+    int Lmax_vr = std::numeric_limits<double>::min();
+    if (init_Vr)
+        this->abfs_r_abfs.init(3, orb, kmesh_times, lcaos_rmax + abfs_ccp_rmax, Lmax_vr)
+    int Lmax = std::max(Lmax_v, Lmax_c, Lmax_vr);
 
     if (init_MGT) {
         MGT.init_Gaunt_CH(Lmax);
@@ -90,6 +94,10 @@ void LRI_CV<Tdata>::set_orbitals(
                                             this->lcaos,
                                             MGT);
         this->m_abfslcaos_lcaos.init_radial_table();
+    }
+    if (init_Vr){
+        this->abfs_r_abfs.init_radial(this->abfs_ccp, this->abfs, MGT)
+        this->abfs_r_abfs.init_radial_table();
     }
 
     ModuleBase::timer::tick("LRI_CV", "set_orbitals");
@@ -182,6 +190,32 @@ auto LRI_CV<Tdata>::cal_Vs(
                            flags,
                            func_cal_Rcut,
                            func_DPcal_V);
+}
+
+template <typename Tdata>
+auto LRI_CV<Tdata>::cal_Vrs(
+    const std::vector<TA>& list_A0,
+    const std::vector<TAC>& list_A1,
+    const std::map<std::string, bool>& flags) // + "writable_Vws"
+    -> std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> {
+    ModuleBase::TITLE("LRI_CV", "cal_Vrs");
+
+    const T_func_DPcal_data<RI::Tensor<Tdata>> func_DPcal_Vr
+        = std::bind(&LRI_CV<Tdata>::DPcal_Vr,
+                    this,
+                    std::placeholders::_1,
+                    std::placeholders::_2,
+                    std::placeholders::_3,
+                    std::placeholders::_4);
+    const T_func_cal_Rcut func_cal_Rcut = std::bind(&LRI_CV<Tdata>::cal_V_Rcut,
+                                                    this,
+                                                    std::placeholders::_1,
+                                                    std::placeholders::_2);
+    return this->cal_datas(list_A0,
+                           list_A1,
+                           flags,
+                           func_cal_Rcut,
+                           func_DPcal_Vr);
 }
 
 template <typename Tdata>
@@ -308,15 +342,15 @@ To11 LRI_CV<Tdata>::DPcal_o11(
 }
 
 template <typename Tdata>
-RI::Tensor<Tdata> LRI_CV<Tdata>::DPcal_V(
+RI::Tensor<Tdata> LRI_CV<Tdata>::DPcal_Vr(
     const int it0,
     const int it1,
     const Abfs::Vector3_Order<double>& R,
     const std::map<std::string, bool>& flags) // "writable_Vws"
 {
     const auto cal_overlap_matrix
-        = std::bind(&Matrix_Orbs11::cal_overlap_matrix<Tdata>,
-                    &this->m_abfs_abfs,
+        = std::bind(&Matrix_Orbs21_r::cal_overlap_matrix<Tdata>,
+                    &this->m_abfs_r_abfs,
                     std::placeholders::_1,
                     std::placeholders::_2,
                     std::placeholders::_3,
@@ -327,9 +361,9 @@ RI::Tensor<Tdata> LRI_CV<Tdata>::DPcal_V(
     return this->DPcal_o11(it0,
                            it1,
                            R,
-                           flags.at("writable_Vws"),
-                           this->rwlock_Vw,
-                           this->Vws,
+                           flags.at("writable_Vrws"),
+                           this->rwlock_Vrw,
+                           this->Vrws,
                            cal_overlap_matrix);
 }
 

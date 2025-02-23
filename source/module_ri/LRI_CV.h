@@ -76,12 +76,13 @@ class LRI_CV
     std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, RI::Tensor<Tdata>>>> Cws;
     std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, std::array<RI::Tensor<Tdata>, 3>>>> dVws;
     std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, std::array<RI::Tensor<Tdata>, 3>>>> dCws;
-
+    std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, RI::Tensor<Tdata>>>> Vrws;
   private:
     pthread_rwlock_t rwlock_Vw;
     pthread_rwlock_t rwlock_Cw;
     pthread_rwlock_t rwlock_dVw;
     pthread_rwlock_t rwlock_dCw;
+    pthread_rwlock_t rwlock_Vrw;
 
     Matrix_Orbs11 m_abfs_abfs;
     Matrix_Orbs21 m_abfslcaos_lcaos;
@@ -106,6 +107,10 @@ class LRI_CV
                                      const int it1,
                                      const Abfs::Vector3_Order<double>& R,
                                      const std::map<std::string, bool>& flags); // "writable_Vws"
+    inline RI::Tensor<Tdata> DPcal_Vr(const int it0,
+                                     const int it1,
+                                     const Abfs::Vector3_Order<double>& R,
+                                     const std::map<std::string, bool>& flags); // "writable_Vrws"
     inline std::array<RI::Tensor<Tdata>, 3> DPcal_dV(const int it0,
                                                      const int it1,
                                                      const Abfs::Vector3_Order<double>& R,

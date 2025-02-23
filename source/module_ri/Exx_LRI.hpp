@@ -136,7 +136,8 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in, c
                           this->info.kmesh_times,
                           this->MGT,
                           true,
-                          true);
+                          true,
+                          PARAM.inp.td_vext && PARAM.inp.out_current);
 
     if (this->info_ewald.use_ewald) {
         if (this->info.hybrid_beta) {
@@ -233,6 +234,34 @@ void Exx_LRI<Tdata>::cal_exx_ions(const int istep, const bool write_cv)
 
 	if (write_cv && GlobalV::MY_RANK == 0) { LRI_CV_Tools::write_Vs_abf(Vs, PARAM.globalv.global_out_dir + "Vs"); }
     this->exx_lri.set_Vs(std::move(Vs), this->info.V_threshold);
+
+    if (PARAM.inp.td_vext && PARAM.inp.out_current) {
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vrs = this->cv.cal_Vrs(list_As_Vs.first,
+                                       list_As_Vs.second[0],
+                                       {{"writable_Vrws", true}});
+        this->cv.Vrws = LRI_CV_Tools::get_dCVws(Vrs);
+        if (this->info_ewald.use_ewald) {
+            std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>
+                Vrs_sr;
+            if (this->info.hybrid_beta) {
+                Vrs_sr = this->sr_cv.cal_Vrs(list_As_Vs.first,
+                                             list_As_Vs.second[0],
+                                             {{"writable_dVrws", true}});
+                Vrs_sr = LRI_CV_Tools::mul2(
+                    RI::Global_Func::convert<Tdata>(-this->info.hybrid_beta),
+                    Vrs_sr);
+                this->sr_cv.dVrws = LRI_CV_Tools::get_dCVws(dVs_sr);
+            }
+            // const double chi = 1.0 / this->lambda;
+            // dVs = this->evq.cal_dVs(chi, dVs);
+            std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>
+                Vrs_full = LRI_CV_Tools::mul2(
+                    RI::Global_Func::convert<Tdata>(this->info.hybrid_alpha),
+                    Vrs);
+            Vrs = this->info.hybrid_beta ? LRI_CV_Tools::minus(Vrs_full, Vrs_sr)
+                                      : Vrs_full;
+        }
+    }
 
     if (PARAM.inp.cal_force || PARAM.inp.cal_stress) {
         std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs
