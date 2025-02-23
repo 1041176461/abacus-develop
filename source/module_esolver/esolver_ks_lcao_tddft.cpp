@@ -192,7 +192,7 @@ void ESolver_KS_LCAO_TDDFT::runner(const int istep, UnitCell& ucell)
         // calculate total time step
         this->totstep++;
         this->print_step();
-        this->p_chgmix->init_mixing();
+        //this->p_chgmix->mix_reset();
         //update At
         if(elecstate::H_TDDFT_pw::stype!=0)
         {
@@ -374,6 +374,13 @@ void ESolver_KS_LCAO_TDDFT::print_step()
 void ESolver_KS_LCAO_TDDFT::iter_init(const int istep, const int iter)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO_TDDFT", "iter_init");
+    if (iter == 1)
+    {
+        this->p_chgmix->mix_reset(); // init mixing
+        this->p_chgmix->mixing_restart_step = PARAM.inp.scf_nmax + 1;
+        this->p_chgmix->mixing_restart_count = 0;
+    }
+
     // mohan update 2012-06-05
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband();
 
