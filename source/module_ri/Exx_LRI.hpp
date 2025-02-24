@@ -246,7 +246,11 @@ void Exx_LRI<Tdata>::cal_exx_ions(const int istep, const bool write_cv)
         }
         else
         {
-            Vrs = LRI_CV_Tools::mul2(RI::Global_Func::convert<Tdata>(this->info.hybrid_alpha), Vrs);
+            const double coeff = (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Cam
+                              || GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Ccp)
+                                 ? 1.0
+                                 : GlobalC::exx_info.info_global.hybrid_alpha;
+            Vrs = LRI_CV_Tools::mul2(RI::Global_Func::convert<Tdata>(coeff), Vrs);
         }
         Vrs_order = LRI_CV_Tools::change_order(std::move(Vrs));
     }
