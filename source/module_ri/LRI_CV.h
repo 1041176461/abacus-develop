@@ -6,19 +6,19 @@
 #ifndef LRI_CV_H
 #define LRI_CV_H
 
-#include <RI/global/Global_Func-2.h>
-#include <RI/global/Tensor.h>
-#include <pthread.h>
-
-#include <functional>
-#include <map>
-#include <vector>
-
 #include "Matrix_Orbs11.h"
+#include "Matrix_Orbs11_r.h"
 #include "Matrix_Orbs21.h"
 #include "module_base/abfs-vector3_order.h"
 #include "module_base/element_basis_index.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
+
+#include <RI/global/Global_Func-2.h>
+#include <RI/global/Tensor.h>
+#include <functional>
+#include <map>
+#include <pthread.h>
+#include <vector>
 
 template <typename Tdata>
 class LRI_CV
@@ -50,6 +50,10 @@ class LRI_CV
         const std::vector<TA>& list_A0,
         const std::vector<TAC>& list_A1,
         const std::map<std::string, bool>& flags); // "writable_dVws"
+    inline std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>
+        cal_Vrs(const std::vector<TA>& list_A0,
+                const std::vector<TAC>& list_A1,
+                const std::map<std::string, bool>& flags); // "writable_Vrws"
     std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>,
               std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>>
         cal_Cs_dCs(const std::vector<TA>& list_A0,
@@ -76,7 +80,8 @@ class LRI_CV
     std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, RI::Tensor<Tdata>>>> Cws;
     std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, std::array<RI::Tensor<Tdata>, 3>>>> dVws;
     std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, std::array<RI::Tensor<Tdata>, 3>>>> dCws;
-    std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, RI::Tensor<Tdata>>>> Vrws;
+    std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, std::array<RI::Tensor<Tdata>, 3>>>> Vrws;
+
   private:
     pthread_rwlock_t rwlock_Vw;
     pthread_rwlock_t rwlock_Cw;
@@ -86,6 +91,7 @@ class LRI_CV
 
     Matrix_Orbs11 m_abfs_abfs;
     Matrix_Orbs21 m_abfslcaos_lcaos;
+    Matrix_Orbs11_r m_abfs_r_abfs;
 
     template <typename Tresult>
     using T_func_DPcal_data = std::function<Tresult(const int it0,
@@ -107,10 +113,11 @@ class LRI_CV
                                      const int it1,
                                      const Abfs::Vector3_Order<double>& R,
                                      const std::map<std::string, bool>& flags); // "writable_Vws"
-    inline RI::Tensor<Tdata> DPcal_Vr(const int it0,
-                                     const int it1,
-                                     const Abfs::Vector3_Order<double>& R,
-                                     const std::map<std::string, bool>& flags); // "writable_Vrws"
+    inline std::pair<std::array<RI::Tensor<Tdata>, 3>, std::array<RI::Tensor<Tdata>, 3>> DPcal_Vr(
+        const int it0,
+        const int it1,
+        const Abfs::Vector3_Order<double>& R,
+        const std::map<std::string, bool>& flags); // "writable_Vrws"
     inline std::array<RI::Tensor<Tdata>, 3> DPcal_dV(const int it0,
                                                      const int it1,
                                                      const Abfs::Vector3_Order<double>& R,

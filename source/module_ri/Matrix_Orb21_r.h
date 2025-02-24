@@ -32,6 +32,16 @@ class Matrix_Orbs21_r
     void init_radial(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A,
                      const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B,
                      const ORB_gaunt_table& MGT);
+    void init_radial_table();
+
+    template <typename Tdata>
+    std::array<RI::Tensor<Tdata>, 3> cal_overlap_matrix(const size_t TA,
+                                         const size_t TB,
+                                         const ModuleBase::Vector3<double>& tauA,
+                                         const ModuleBase::Vector3<double>& tauB,
+                                         const ModuleBase::Element_Basis_Index::IndexLNM& index_A,
+                                         const ModuleBase::Element_Basis_Index::IndexLNM& index_B,
+                                         const Matrix_Order& matrix_order) const;
 
   private:
     ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;

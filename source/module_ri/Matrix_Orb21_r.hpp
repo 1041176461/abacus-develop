@@ -11,7 +11,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 template <typename Tdata>
-RI::Tensor<Tdata> Matrix_Orbs11::cal_overlap_matrix(const size_t TA,
+std::array<RI::Tensor<Tdata>, 3> Matrix_Orbs11_r::cal_overlap_matrix(const size_t TA,
                                                     const size_t TB,
                                                     const ModuleBase::Vector3<double>& tauA,
                                                     const ModuleBase::Vector3<double>& tauB,
@@ -19,7 +19,7 @@ RI::Tensor<Tdata> Matrix_Orbs11::cal_overlap_matrix(const size_t TA,
                                                     const ModuleBase::Element_Basis_Index::IndexLNM& index_B,
                                                     const Matrix_Order& matrix_order) const
 {
-    RI::Tensor<Tdata> m;
+    std::array<RI::Tensor<Tdata>, 3> m;
     const size_t sizeA = index_A[TA].count_size;
     const size_t sizeB = index_B[TB].count_size;
     switch (matrix_order)
@@ -33,9 +33,7 @@ RI::Tensor<Tdata> Matrix_Orbs11::cal_overlap_matrix(const size_t TA,
     default:
         throw std::invalid_argument(std::string(__FILE__) + " line " + std::to_string(__LINE__));
     }
-    ModuleBase::Vector3<double> origin_point(0.0, 0.0, 0.0);
     double factor = sqrt(ModuleBase::FOUR_PI / 3.0);
-    const ModuleBase::Vector3<double>& distance = tauB - tauA;
 
     for (const auto& co3: this->center2_orb11.at(TA).at(TB))
     {
@@ -59,39 +57,42 @@ RI::Tensor<Tdata> Matrix_Orbs11::cal_overlap_matrix(const size_t TA,
                                                                            MA,
                                                                            MB);
                             double overlap_x = -1 * factor
-                                               * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(origin_point,
-                                                                                                        distance,
+                                               * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(tauA*GlobalC::ucell.lat0,
+                                                                                                        tauB*GlobalC::ucell.lat0,
                                                                                                         mA,
                                                                                                         1,
                                                                                                         mB); // m =  1
 
                             double overlap_y = -1 * factor
-                                               * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(origin_point,
-                                                                                                        distance,
+                                               * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(tauA*GlobalC::ucell.lat0,
+                                                                                                        tauB*GlobalC::ucell.lat0,
                                                                                                         mA,
                                                                                                         2,
                                                                                                         mB); // m = -1
 
                             double overlap_z = factor
-                                               * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(origin_point,
-                                                                                                        distance,
+                                               * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(tauA*GlobalC::ucell.lat0,
+                                                                                                        tauB*GlobalC::ucell.lat0,
                                                                                                         mA,
                                                                                                         0,
                                                                                                         mB); // m =  0
                             const size_t iA = index_A[TA][LA][NA][MA];
                             const size_t iB = index_B[TB][LB][NB][MB];
-                            const Tdata overlap = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z) + tauA * overlap_o;
-                            switch (matrix_order)
-                            {
-                            case Matrix_Order::AB:
-                                m(iA, iB) = overlap;
-                                break;
-                            case Matrix_Order::BA:
-                                m(iB, iA) = overlap;
-                                break;
-                            default:
-                                throw std::invalid_argument(std::string(__FILE__) + " line "
-                                                            + std::to_string(__LINE__));
+                            const ModuleBase::Vector3<double> overlap = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z) + tauA * overlap_o * GlobalC::ucell.lat0;
+                            for(size_t i=0; i<m.size(); ++i)
+							{
+                                switch (matrix_order)
+                                {
+                                case Matrix_Order::AB:
+                                    m[i](iA, iB) = overlap[i];
+                                    break;
+                                case Matrix_Order::BA:
+                                    m[i](iB, iA) = overlap[i];
+                                    break;
+                                default:
+                                    throw std::invalid_argument(std::string(__FILE__) + " line "
+                                                                + std::to_string(__LINE__));
+                                }
                             }
                         }
                     }

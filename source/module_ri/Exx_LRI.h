@@ -62,6 +62,7 @@ public:
     std::vector<std::vector<int>> get_abfs_nchis() const;
 
     std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Hexxs;
+    std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim> Vrs_order;
     double Eexx;
 	ModuleBase::matrix force_exx;
 	ModuleBase::matrix stress_exx;
