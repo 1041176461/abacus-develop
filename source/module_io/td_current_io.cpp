@@ -13,8 +13,55 @@
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
+#ifdef __EXX
+#include "module_ri/Exx_LRI.h"
+#endif
 
 #ifdef __LCAO
+void ModuleIO::cal_current_exx(
+    Exx_LRI<std::complex<double>>& exx_lri,
+    const elecstate::DensityMatrix<std::complex<double>, double>& dm,
+    const Parallel_Orbitals& pv,
+    std::vector<hamilt::HContainer<TR>>& hR,
+)
+{
+    ModuleBase::TITLE("ModuleIO","cal_current_exx");
+	ModuleBase::timer::tick("ModuleIO", "cal_current_exx");
+    // gamma_only and symmetry are not supported by tddft here
+    int ndim = 3;
+    std::vector<std::vector<std::complex<double>>> DMk_trans_vector = dm->get_DMK_vector();
+    std::vector<const std::vector<std::complex<double>>*> DMk_trans_pointer(nk);
+    for (int ik = 0;ik < nk;++ik) { DMk_trans_pointer[ik] = &DMk_trans_vector[ik]; }
+    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, ndim>>, RI::Tensor<Tdata>>>>
+                    Ds = RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, DMk_trans_pointer, *dm.get_paraV_pointer(), PARAM.inp.nspin);
+    std::vector<std::vector<std::map<TA, std::map<TAC, RI::Tensor<std::complex<double>>>>>> Hexxs;
+    Hexxs.resize(3);
+    for (size_t i = 0; i!=ndim; ++i)
+    {
+        Hexxs[i].resize(PARAM.inp.nspin);
+        exx_lri.lock()->reset_Vs(exx_lri->Vrs_order[i]);
+        const std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge
+            = RI_2D_Comm::get_2D_judge(pv);
+        for(int is=0; is<PARAM.inp.nspin; ++is)
+        {
+            exx_lri.set_Ds(Ds[is], exx_lri.info.dm_threshold);
+            exx_lri.cal_Hs();
+            Hexxs[i][is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
+                    exx_lri.mpi_comm, std::move(exx_lri.Hs), std::get<0>(judge[is]), std::get<1>(judge[is]));
+            RI_2D_Comm::add_HexxR(
+                is,
+                1.0,
+                Hexxs[i],
+                pv,
+                PARAM.globalv.npol,
+                hR[i],
+                nullptr);
+        }
+    }
+
+    ModuleBase::timer::tick("ModuleIO", "cal_current_exx");
+}
+
 void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>& DM_real,
                         elecstate::DensityMatrix<std::complex<double>, double>& DM_imag,
                         int nspin)
@@ -40,7 +87,11 @@ void ModuleIO::write_current(const int istep,
                              const Parallel_Orbitals* pv,
                              const LCAO_Orbitals& orb,
                              const TD_current* cal_current,
-                             Record_adj& ra)
+                             Record_adj& ra,
+#ifdef __EXX
+                            Exx_LRI<std::complex<double>>& exx_lri
+#endif
+                             )
 {
 
     ModuleBase::TITLE("ModuleIO", "write_current");
@@ -64,6 +115,7 @@ void ModuleIO::write_current(const int istep,
             current_term[dir] = TD_Velocity::td_vel_op->get_current_term_pointer(dir);
         }
     }
+
     double omega=GlobalC::ucell.omega;
     // construct a DensityMatrix object
     // Since the function cal_dm_psi do not suport DMR in complex type, I replace it with two DMR in double type. Should
@@ -73,6 +125,10 @@ void ModuleIO::write_current(const int istep,
     elecstate::DensityMatrix<std::complex<double>, double> DM_imag(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
     // calculate DMK
     elecstate::cal_dm_psi(DM_real.get_paraV_pointer(), pelec->wg, psi[0], DM_real);
+#ifdef __EXX
+    if (GlobalC::exx_info.info_global.cal_exx)
+        this->cal_current_exx(exx_lri, DM_real, pv, current_term)
+#endif
 
     // init DMR
     DM_real.init_DMR(ra, &GlobalC::ucell);
@@ -320,7 +376,11 @@ void ModuleIO::write_current_eachk(const int istep,
                              const Parallel_Orbitals* pv,
                              const LCAO_Orbitals& orb,
                              const TD_current* cal_current,
-                             Record_adj& ra)
+                             Record_adj& ra,
+#ifdef __EXX
+                Exx_LRI<std::complex<double>>& exx_lri
+#endif                       
+                             )
 {
 
     ModuleBase::TITLE("ModuleIO", "write_current");
@@ -353,6 +413,10 @@ void ModuleIO::write_current_eachk(const int istep,
     elecstate::DensityMatrix<std::complex<double>, double> DM_imag(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
     // calculate DMK
     elecstate::cal_dm_psi(DM_real.get_paraV_pointer(), pelec->wg, psi[0], DM_real);
+#ifdef __EXX
+    if (GlobalC::exx_info.info_global.cal_exx)
+        this->cal_current_exx(exx_lri, DM_real, pv, current_term)
+#endif
 
     // init DMR
     DM_real.init_DMR(ra, &GlobalC::ucell);
@@ -499,4 +563,6 @@ void ModuleIO::write_current_eachk(const int istep,
     ModuleBase::timer::tick("ModuleIO", "write_current");
     return;
 }
+
+
 #endif //__LCAO

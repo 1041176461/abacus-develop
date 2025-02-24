@@ -842,7 +842,11 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
                                     tmp_DM->get_paraV_pointer(),
                                     orb_,
                                     this->velocity_mat,
-                                    this->RA);
+                                    this->RA,
+#ifdef __EXX
+                                    *this->exx_lri_complex
+#endif
+                                    );
         }
         else
         {
@@ -854,7 +858,11 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
                                     tmp_DM->get_paraV_pointer(),
                                     orb_,
                                     this->velocity_mat,
-                                    this->RA);
+                                    this->RA,
+#ifdef __EXX
+                                    *this->exx_lri_complex
+#endif
+                                    );
         }
     }
     std::cout << "Potential (Ry): " << std::setprecision(15) << this->pelec->f_en.etot <<std::endl;

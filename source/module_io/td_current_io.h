@@ -19,7 +19,11 @@ void write_current_eachk(const int istep,
                         const Parallel_Orbitals* pv,
                         const LCAO_Orbitals& orb,
                         const TD_current* cal_current,
-                        Record_adj& ra);
+                        Record_adj& ra,
+#ifdef __EXX
+                Exx_LRI<std::complex<double>>& exx_lri
+#endif
+                        );
 
 void write_current(const int istep,
                 const psi::Psi<std::complex<double>>* psi,
@@ -29,7 +33,11 @@ void write_current(const int istep,
                 const Parallel_Orbitals* pv,
                 const LCAO_Orbitals& orb,
                 const TD_current* cal_current,
-                Record_adj& ra);
+                Record_adj& ra,
+#ifdef __EXX
+                Exx_LRI<std::complex<double>>& exx_lri
+#endif
+                );
 
 /// @brief calculate sum_n[𝜌_(𝑛𝑘,𝜇𝜈)] for current calculation
 void cal_tmp_DM_k(elecstate::DensityMatrix<std::complex<double>, double>& DM_real,
@@ -42,6 +50,14 @@ void cal_tmp_DM_k(elecstate::DensityMatrix<std::complex<double>, double>& DM_rea
 void cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>& DM_real,
                 elecstate::DensityMatrix<std::complex<double>, double>& DM_imag,
                 const int nspin);
+
+/// @brief cal [r, Hexx] for current density
+void cal_current_exx(
+    Exx_LRI<std::complex<double>>& exx_lri,
+    const elecstate::DensityMatrix<std::complex<double>, double>& dm,
+    const Parallel_Orbitals& pv,
+    std::vector<hamilt::HContainer<TR>>& hR,
+);
 
 #endif // __LCAO
 } // namespace ModuleIO
