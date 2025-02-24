@@ -57,7 +57,7 @@ void Ewald_Vq<Tdata>::init(const LCAO_Orbitals& orb,
     this->index_abfs = ModuleBase::Element_Basis_Index::construct_index(range_abfs);
 
     this->cv
-        .set_orbitals(orb, this->g_lcaos, this->g_abfs, this->g_abfs_ccp, this->info.kmesh_times, MGT_in, false, false);
+        .set_orbitals(orb, this->g_lcaos, this->g_abfs, this->g_abfs_ccp, this->info.kmesh_times, MGT_in, false, false, false);
     this->gaunt.create(MGT_in.Gaunt_Coefficients.getBound1(),
                        MGT_in.Gaunt_Coefficients.getBound2(),
                        MGT_in.Gaunt_Coefficients.getBound3());

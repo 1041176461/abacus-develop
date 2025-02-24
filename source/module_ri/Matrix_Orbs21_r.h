@@ -34,6 +34,12 @@ class Matrix_Orbs21_r
                      const ORB_gaunt_table& MGT);
     void init_radial_table();
 
+    enum class Matrix_Order
+    {
+        AB,
+        BA
+    };
+
     template <typename Tdata>
     std::array<RI::Tensor<Tdata>, 3> cal_overlap_matrix(const size_t TA,
                                          const size_t TB,
@@ -66,4 +72,8 @@ class Matrix_Orbs21_r
                                                                    std::map<size_t, // NB
                                                                             Center2_Orb::Orb21>>>>>>>>
         center2_orb21_r;
-}
+};
+
+#include "Matrix_Orbs21_r.hpp"
+
+#endif

@@ -154,7 +154,8 @@ void Exx_LRI<Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in, c
                                      this->info.kmesh_times,
                                      this->MGT,
                                      false,
-                                     false);
+                                     false,
+                                     PARAM.inp.td_vext && PARAM.inp.out_current);
         }
         this->evq.init(orb, this->mpi_comm, this->p_kv, this->lcaos, this->abfs, get_ccp_parameter(), this->MGT);
     }

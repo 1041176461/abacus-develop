@@ -11,7 +11,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 template <typename Tdata>
-std::array<RI::Tensor<Tdata>, 3> Matrix_Orbs11_r::cal_overlap_matrix(const size_t TA,
+std::array<RI::Tensor<Tdata>, 3> Matrix_Orbs21_r::cal_overlap_matrix(const size_t TA,
                                                     const size_t TB,
                                                     const ModuleBase::Vector3<double>& tauA,
                                                     const ModuleBase::Vector3<double>& tauB,
@@ -52,30 +52,30 @@ std::array<RI::Tensor<Tdata>, 3> Matrix_Orbs11_r::cal_overlap_matrix(const size_
                         for (size_t MB = 0; MB != 2 * LB + 1; ++MB)
                         {
 
-                            const Tdata overlap_o = co6.second.cal_overlap(origin_point,
-                                                                           distance,
+                            const Tdata overlap_o = co6.second.cal_overlap(tauA*GlobalC::ucell.lat0,
+                                                                           tauB*GlobalC::ucell.lat0,
                                                                            MA,
                                                                            MB);
                             double overlap_x = -1 * factor
                                                * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(tauA*GlobalC::ucell.lat0,
                                                                                                         tauB*GlobalC::ucell.lat0,
-                                                                                                        mA,
+                                                                                                        MA,
                                                                                                         1,
-                                                                                                        mB); // m =  1
+                                                                                                        MB); // m =  1
 
                             double overlap_y = -1 * factor
                                                * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(tauA*GlobalC::ucell.lat0,
                                                                                                         tauB*GlobalC::ucell.lat0,
-                                                                                                        mA,
+                                                                                                        MA,
                                                                                                         2,
-                                                                                                        mB); // m = -1
+                                                                                                        MB); // m = -1
 
                             double overlap_z = factor
                                                * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(tauA*GlobalC::ucell.lat0,
                                                                                                         tauB*GlobalC::ucell.lat0,
-                                                                                                        mA,
+                                                                                                        MA,
                                                                                                         0,
-                                                                                                        mB); // m =  0
+                                                                                                        MB); // m =  0
                             const size_t iA = index_A[TA][LA][NA][MA];
                             const size_t iB = index_B[TB][LB][NB][MB];
                             const ModuleBase::Vector3<double> overlap = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z) + tauA * overlap_o * GlobalC::ucell.lat0;

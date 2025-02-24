@@ -7,7 +7,7 @@
 #define LRI_CV_H
 
 #include "Matrix_Orbs11.h"
-#include "Matrix_Orbs11_r.h"
+#include "Matrix_Orbs21_r.h"
 #include "Matrix_Orbs21.h"
 #include "module_base/abfs-vector3_order.h"
 #include "module_base/element_basis_index.h"
@@ -40,7 +40,8 @@ class LRI_CV
                       const double& kmesh_times,
                       ORB_gaunt_table& MGT,
                       const bool& init_MGT,
-                      const bool& init_C);
+                      const bool& init_C,
+                      const bool& init_Vr);
 
     inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_Vs(
         const std::vector<TA>& list_A0,
@@ -91,7 +92,7 @@ class LRI_CV
 
     Matrix_Orbs11 m_abfs_abfs;
     Matrix_Orbs21 m_abfslcaos_lcaos;
-    Matrix_Orbs11_r m_abfs_r_abfs;
+    Matrix_Orbs21_r m_abfs_r_abfs;
 
     template <typename Tresult>
     using T_func_DPcal_data = std::function<Tresult(const int it0,
