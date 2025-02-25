@@ -566,7 +566,7 @@ Numerical_Orbital_Lm Exx_Abfs::Construct_Orbs::construct_orb_r(
 
     for (int T = 0; T < orb_A.size(); ++T)
     {
-        count_Nr = orb_A[orb_r_ntype][0][0].getNr();
+        count_Nr = orb_A[T][0][0].getNr();
         if (count_Nr > mat_Nr)
         {
             mat_Nr = count_Nr;
