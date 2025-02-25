@@ -19,42 +19,44 @@
 
 #ifdef __LCAO
 void ModuleIO::cal_current_exx(
-    Exx_LRI<std::complex<double>>& exx_lri,
+    Exx_LRI<std::complex<double>>& exx,
     const elecstate::DensityMatrix<std::complex<double>, double>& dm,
-    const Parallel_Orbitals& pv,
-    std::vector<hamilt::HContainer<TR>>& hR,
+    const K_Vectors& kv,
+    const Parallel_Orbitals* pv,
+    std::vector<hamilt::HContainer<std::complex<double>>*>& hR
 )
 {
     ModuleBase::TITLE("ModuleIO","cal_current_exx");
 	ModuleBase::timer::tick("ModuleIO", "cal_current_exx");
     // gamma_only and symmetry are not supported by tddft here
-    int ndim = 3;
-    std::vector<std::vector<std::complex<double>>> DMk_trans_vector = dm->get_DMK_vector();
+    constexpr std::size_t ndim = 3;
+    const int& nk = kv.get_nks() / PARAM.inp.nspin;
+    std::vector<std::vector<std::complex<double>>> DMk_trans_vector = dm.get_DMK_vector();
     std::vector<const std::vector<std::complex<double>>*> DMk_trans_pointer(nk);
     for (int ik = 0;ik < nk;++ik) { DMk_trans_pointer[ik] = &DMk_trans_vector[ik]; }
-    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, ndim>>, RI::Tensor<Tdata>>>>
-                    Ds = RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, DMk_trans_pointer, *dm.get_paraV_pointer(), PARAM.inp.nspin);
-    std::vector<std::vector<std::map<TA, std::map<TAC, RI::Tensor<std::complex<double>>>>>> Hexxs;
+    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, ndim>>, RI::Tensor<std::complex<double>>>>>
+                    Ds = RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(kv, DMk_trans_pointer, *dm.get_paraV_pointer(), PARAM.inp.nspin);
+    std::vector<std::vector<std::map<int, std::map<std::pair<int, std::array<int, ndim>>, RI::Tensor<std::complex<double>>>>>> Hexxs;
     Hexxs.resize(3);
     for (size_t i = 0; i!=ndim; ++i)
     {
         Hexxs[i].resize(PARAM.inp.nspin);
-        exx_lri.lock()->reset_Vs(exx_lri->Vrs_order[i]);
-        const std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge
-            = RI_2D_Comm::get_2D_judge(pv);
+        exx.reset_Vs(exx.Vrs_order[i]);
+        const std::vector<std::tuple<std::set<int>, std::set<int>>> judge
+            = RI_2D_Comm::get_2D_judge(*pv);
         for(int is=0; is<PARAM.inp.nspin; ++is)
         {
-            exx_lri.set_Ds(Ds[is], exx_lri.info.dm_threshold);
-            exx_lri.cal_Hs();
+            exx.exx_lri.set_Ds(Ds[is], GlobalC::exx_info.info_ri.dm_threshold);
+            exx.exx_lri.cal_Hs();
             Hexxs[i][is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
-                    exx_lri.mpi_comm, std::move(exx_lri.Hs), std::get<0>(judge[is]), std::get<1>(judge[is]));
+                    exx.mpi_comm, std::move(exx.exx_lri.Hs), std::get<0>(judge[is]), std::get<1>(judge[is]));
             RI_2D_Comm::add_HexxR(
                 is,
                 1.0,
                 Hexxs[i],
-                pv,
+                *pv,
                 PARAM.globalv.npol,
-                hR[i],
+                *hR[i],
                 nullptr);
         }
     }
@@ -127,7 +129,7 @@ void ModuleIO::write_current(const int istep,
     elecstate::cal_dm_psi(DM_real.get_paraV_pointer(), pelec->wg, psi[0], DM_real);
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx)
-        this->cal_current_exx(exx_lri, DM_real, pv, current_term)
+        cal_current_exx(exx_lri, DM_real, kv, pv, current_term);
 #endif
 
     // init DMR
@@ -415,7 +417,7 @@ void ModuleIO::write_current_eachk(const int istep,
     elecstate::cal_dm_psi(DM_real.get_paraV_pointer(), pelec->wg, psi[0], DM_real);
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx)
-        this->cal_current_exx(exx_lri, DM_real, pv, current_term)
+        cal_current_exx(exx_lri, DM_real, kv, pv, current_term);
 #endif
 
     // init DMR

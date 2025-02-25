@@ -11,27 +11,32 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 template <typename Tdata>
-std::array<RI::Tensor<Tdata>, 3> Matrix_Orbs21_r::cal_overlap_matrix(const size_t TA,
-                                                    const size_t TB,
-                                                    const ModuleBase::Vector3<double>& tauA,
-                                                    const ModuleBase::Vector3<double>& tauB,
-                                                    const ModuleBase::Element_Basis_Index::IndexLNM& index_A,
-                                                    const ModuleBase::Element_Basis_Index::IndexLNM& index_B,
-                                                    const Matrix_Order& matrix_order) const
+std::array<RI::Tensor<Tdata>, 3> Matrix_Orbs21_r::cal_overlap_matrix(
+    const size_t TA,
+    const size_t TB,
+    const ModuleBase::Vector3<double>& tauA,
+    const ModuleBase::Vector3<double>& tauB,
+    const ModuleBase::Element_Basis_Index::IndexLNM& index_A,
+    const ModuleBase::Element_Basis_Index::IndexLNM& index_B,
+    const Matrix_Orbs11::Matrix_Order& matrix_order)
 {
+    using namespace RI::Array_Operator;
     std::array<RI::Tensor<Tdata>, 3> m;
     const size_t sizeA = index_A[TA].count_size;
     const size_t sizeB = index_B[TB].count_size;
-    switch (matrix_order)
+    for (size_t i = 0; i < m.size(); ++i)
     {
-    case Matrix_Order::AB:
-        m = RI::Tensor<Tdata>({sizeA, sizeB});
-        break;
-    case Matrix_Order::BA:
-        m = RI::Tensor<Tdata>({sizeB, sizeA});
-        break;
-    default:
-        throw std::invalid_argument(std::string(__FILE__) + " line " + std::to_string(__LINE__));
+        switch (matrix_order)
+        {
+        case Matrix_Orbs11::Matrix_Order::AB:
+            m[i] = RI::Tensor<Tdata>({sizeA, sizeB});
+            break;
+        case Matrix_Orbs11::Matrix_Order::BA:
+            m[i] = RI::Tensor<Tdata>({sizeB, sizeA});
+            break;
+        default:
+            throw std::invalid_argument(std::string(__FILE__) + " line " + std::to_string(__LINE__));
+        }
     }
     double factor = sqrt(ModuleBase::FOUR_PI / 3.0);
 
@@ -51,43 +56,47 @@ std::array<RI::Tensor<Tdata>, 3> Matrix_Orbs21_r::cal_overlap_matrix(const size_
                         const size_t NB = co6.first;
                         for (size_t MB = 0; MB != 2 * LB + 1; ++MB)
                         {
+                            std::array<Tdata, 3> overlap;
 
-                            const Tdata overlap_o = co6.second.cal_overlap(tauA*GlobalC::ucell.lat0,
-                                                                           tauB*GlobalC::ucell.lat0,
+                            const Tdata overlap_o = co6.second.cal_overlap(tauA * GlobalC::ucell.lat0,
+                                                                           tauB * GlobalC::ucell.lat0,
                                                                            MA,
                                                                            MB);
-                            double overlap_x = -1 * factor
-                                               * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(tauA*GlobalC::ucell.lat0,
-                                                                                                        tauB*GlobalC::ucell.lat0,
-                                                                                                        MA,
-                                                                                                        1,
-                                                                                                        MB); // m =  1
+                            overlap[0] = -1 * factor
+                                               * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(
+                                                   tauA * GlobalC::ucell.lat0,
+                                                   tauB * GlobalC::ucell.lat0,
+                                                   MA,
+                                                   1,
+                                                   MB); // m =  1
 
-                            double overlap_y = -1 * factor
-                                               * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(tauA*GlobalC::ucell.lat0,
-                                                                                                        tauB*GlobalC::ucell.lat0,
-                                                                                                        MA,
-                                                                                                        2,
-                                                                                                        MB); // m = -1
+                            overlap[1]  = -1 * factor
+                                               * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(
+                                                   tauA * GlobalC::ucell.lat0,
+                                                   tauB * GlobalC::ucell.lat0,
+                                                   MA,
+                                                   2,
+                                                   MB); // m = -1
 
-                            double overlap_z = factor
-                                               * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(tauA*GlobalC::ucell.lat0,
-                                                                                                        tauB*GlobalC::ucell.lat0,
-                                                                                                        MA,
-                                                                                                        0,
-                                                                                                        MB); // m =  0
+                            overlap[2] = factor
+                                               * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(
+                                                   tauA * GlobalC::ucell.lat0,
+                                                   tauB * GlobalC::ucell.lat0,
+                                                   MA,
+                                                   0,
+                                                   MB); // m =  0
                             const size_t iA = index_A[TA][LA][NA][MA];
                             const size_t iB = index_B[TB][LB][NB][MB];
-                            const ModuleBase::Vector3<double> overlap = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z) + tauA * overlap_o * GlobalC::ucell.lat0;
-                            for(size_t i=0; i<m.size(); ++i)
-							{
+                            for (size_t i = 0; i < m.size(); ++i)
+                            {
+                                const Tdata res = overlap[i] + RI::Global_Func::convert<Tdata>(tauA[i] * GlobalC::ucell.lat0) * overlap_o;
                                 switch (matrix_order)
                                 {
-                                case Matrix_Order::AB:
-                                    m[i](iA, iB) = overlap[i];
+                                case Matrix_Orbs11::Matrix_Order::AB:
+                                    m[i](iA, iB) = res;
                                     break;
-                                case Matrix_Order::BA:
-                                    m[i](iB, iA) = overlap[i];
+                                case Matrix_Orbs11::Matrix_Order::BA:
+                                    m[i](iB, iA) = res;
                                     break;
                                 default:
                                     throw std::invalid_argument(std::string(__FILE__) + " line "

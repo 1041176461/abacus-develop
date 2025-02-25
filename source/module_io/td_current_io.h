@@ -53,10 +53,11 @@ void cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>& DM_real,
 
 /// @brief cal [r, Hexx] for current density
 void cal_current_exx(
-    Exx_LRI<std::complex<double>>& exx_lri,
+    Exx_LRI<std::complex<double>>& exx,
     const elecstate::DensityMatrix<std::complex<double>, double>& dm,
-    const Parallel_Orbitals& pv,
-    std::vector<hamilt::HContainer<TR>>& hR,
+    const K_Vectors& kv,
+    const Parallel_Orbitals* pv,
+    std::vector<hamilt::HContainer<std::complex<double>>*>& hR
 );
 
 #endif // __LCAO

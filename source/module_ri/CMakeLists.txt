@@ -5,6 +5,7 @@ if (ENABLE_LIBRI)
   list(APPEND objects
         Matrix_Orbs11.cpp
         Matrix_Orbs21.cpp
+        Matrix_Orbs21_r.cpp
         Matrix_Orbs22.cpp
         RI_2D_Comm.cpp
         exx_lip.cpp

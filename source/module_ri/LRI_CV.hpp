@@ -74,8 +74,8 @@ void LRI_CV<Tdata>::set_orbitals(const LCAO_Orbitals& orb,
         this->m_abfslcaos_lcaos.init(1, orb, kmesh_times, lcaos_rmax, Lmax_c);
     int Lmax_vr = std::numeric_limits<double>::min();
     if (init_Vr)
-        this->m_abfs_r_abfs.init(3, orb, kmesh_times, lcaos_rmax + abfs_ccp_rmax, Lmax_vr); 
-    int Lmax = std::max(Lmax_v, Lmax_c, Lmax_vr);
+        this->m_abfs_r_abfs.init(3, orb, kmesh_times, lcaos_rmax + abfs_ccp_rmax, Lmax_vr);
+    int Lmax = std::max({Lmax_v, Lmax_c, Lmax_vr});
 
     if (init_MGT)
     {
@@ -92,7 +92,7 @@ void LRI_CV<Tdata>::set_orbitals(const LCAO_Orbitals& orb,
     }
     if (init_Vr)
     {
-        this->m_abfs_r_abfs.init_radial(this->abfs_ccp, this->abfs, MGT); 
+        this->m_abfs_r_abfs.init_radial(this->abfs_ccp, this->abfs, MGT);
         this->m_abfs_r_abfs.init_radial_table();
     }
 
@@ -189,20 +189,15 @@ auto LRI_CV<Tdata>::cal_Vrs(const std::vector<TA>& list_A0,
 {
     ModuleBase::TITLE("LRI_CV", "cal_Vrs");
 
-    const T_func_DPcal_data<RI::Tensor<Tdata>> func_DPcal_Vr = std::bind(&LRI_CV<Tdata>::DPcal_Vr,
-                                                                         this,
-                                                                         std::placeholders::_1,
-                                                                         std::placeholders::_2,
-                                                                         std::placeholders::_3,
-                                                                         std::placeholders::_4);
+    const T_func_DPcal_data<std::array<RI::Tensor<Tdata>, 3>> func_DPcal_Vr = std::bind(&LRI_CV<Tdata>::DPcal_Vr,
+                                                                                        this,
+                                                                                        std::placeholders::_1,
+                                                                                        std::placeholders::_2,
+                                                                                        std::placeholders::_3,
+                                                                                        std::placeholders::_4);
     const T_func_cal_Rcut func_cal_Rcut
         = std::bind(&LRI_CV<Tdata>::cal_V_Rcut, this, std::placeholders::_1, std::placeholders::_2);
-    std::pair<std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>,
-                 std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>>
-                 Vrs_pair = this->cal_datas(list_A0, list_A1, flags, func_cal_Rcut, func_DPcal_Vr);
-    std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>& Vrs0 = std::get<0>(Vrs_pair);
-    std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>& Vrs1 = std::get<1>(Vrs_pair);
-    return LRI_CV_Tools::minus(Vrs0, Vrs1);
+    return this->cal_datas(list_A0, list_A1, flags, func_cal_Rcut, func_DPcal_Vr);
 }
 
 template <typename Tdata>
@@ -314,12 +309,38 @@ To11 LRI_CV<Tdata>::DPcal_o11(const int it0,
 }
 
 template <typename Tdata>
-std::pair<std::array<RI::Tensor<Tdata>, 3>, std::array<RI::Tensor<Tdata>, 3>> LRI_CV<Tdata>::DPcal_Vr(
+RI::Tensor<Tdata> LRI_CV<Tdata>::DPcal_V(
     const int it0,
     const int it1,
     const Abfs::Vector3_Order<double>& R,
     const std::map<std::string, bool>& flags) // "writable_Vws"
 {
+    const auto cal_overlap_matrix
+        = std::bind(&Matrix_Orbs11::cal_overlap_matrix<Tdata>,
+                    &this->m_abfs_abfs,
+                    std::placeholders::_1,
+                    std::placeholders::_2,
+                    std::placeholders::_3,
+                    std::placeholders::_4,
+                    std::placeholders::_5,
+                    std::placeholders::_6,
+                    std::placeholders::_7);
+    return this->DPcal_o11(it0,
+                           it1,
+                           R,
+                           flags.at("writable_Vws"),
+                           this->rwlock_Vw,
+                           this->Vws,
+                           cal_overlap_matrix);
+}
+
+template <typename Tdata>
+std::array<RI::Tensor<Tdata>, 3> LRI_CV<Tdata>::DPcal_Vr(const int it0,
+                                                         const int it1,
+                                                         const Abfs::Vector3_Order<double>& R,
+                                                         const std::map<std::string, bool>& flags) // "writable_Vws"
+{
+    using namespace RI::Array_Operator;
     const Abfs::Vector3_Order<double> Rm = -R;
     const auto cal_overlap_matrix = std::bind(&Matrix_Orbs21_r::cal_overlap_matrix<Tdata>,
                                               &this->m_abfs_r_abfs,
@@ -331,12 +352,13 @@ std::pair<std::array<RI::Tensor<Tdata>, 3>, std::array<RI::Tensor<Tdata>, 3>> LR
                                               std::placeholders::_6,
                                               std::placeholders::_7);
 
-    const std::array<RI::Tensor<Tdata>, 3> A1
+    const std::array<RI::Tensor<Tdata>, 3> A
         = this->DPcal_o11(it0, it1, R, flags.at("writable_Vrws"), this->rwlock_Vrw, this->Vrws, cal_overlap_matrix);
-    const std::array<RI::Tensor<Tdata>, 3> A2
-        = this->DPcal_o11(it1, it0, Rm, flags.at("writable_Vrws"), this->rwlock_Vrw, this->Vrws, cal_overlap_matrix);
-    return std::make_pair(A1, A2);
+    const std::array<RI::Tensor<Tdata>, 3> B = LRI_CV_Tools::negative(LRI_CV_Tools::transform_Rm(A));
+    
+    return B - A;
 }
+
 
 template <typename Tdata>
 std::array<RI::Tensor<Tdata>, 3> LRI_CV<Tdata>::DPcal_dV(const int it0,

@@ -114,7 +114,7 @@ class LRI_CV
                                      const int it1,
                                      const Abfs::Vector3_Order<double>& R,
                                      const std::map<std::string, bool>& flags); // "writable_Vws"
-    inline std::pair<std::array<RI::Tensor<Tdata>, 3>, std::array<RI::Tensor<Tdata>, 3>> DPcal_Vr(
+    inline std::array<RI::Tensor<Tdata>, 3> DPcal_Vr(
         const int it0,
         const int it1,
         const Abfs::Vector3_Order<double>& R,

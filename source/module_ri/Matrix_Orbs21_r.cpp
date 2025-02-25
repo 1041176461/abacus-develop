@@ -4,6 +4,7 @@
 //=======================
 
 #include "Matrix_Orbs21_r.h"
+#include "exx_abfs-construct_orbs.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -44,8 +45,6 @@ void Matrix_Orbs21_r::init(const int mode,
                                              kmesh,
                                              Rmesh,
                                              psb_);
-    this->orbs = Exx_Abfs::Construct_Orbs::change_orbs(orb, kmesh_times);
-    this->orb_r = Matrix_Orbs21_r::construct_orb_r(this->orbs);
 
     // //=========================================
     // // (3) make Gaunt coefficients table
@@ -62,6 +61,7 @@ void Matrix_Orbs21_r::init_radial(const std::vector<std::vector<std::vector<Nume
 {
     ModuleBase::TITLE("Matrix_Orbs21_r", "init_radial");
     ModuleBase::timer::tick("Matrix_Orbs21_r", "init_radial");
+    Numerical_Orbital_Lm orb_r = Exx_Abfs::Construct_Orbs::construct_orb_r(orb_A);
     for (size_t TA = 0; TA != orb_A.size(); ++TA)
     {
         for (size_t TB = 0; TB != orb_B.size(); ++TB)
@@ -79,7 +79,7 @@ void Matrix_Orbs21_r::init_radial(const std::vector<std::vector<std::vector<Nume
                                                Center2_Orb::Orb11(orb_A[TA][LA][NA], orb_B[TB][LB][NB], psb_, MGT)));
                             this->center2_orb21_r[TA][TB][LA][NA][LB].insert(std::make_pair(
                                 NB,
-                                Center2_Orb::Orb21(orb_A[TA][LA][NA], this->orb_r, orb_B[TB][LB][NB], psb_, MGT)));
+                                Center2_Orb::Orb21(orb_A[TA][LA][NA], orb_r, orb_B[TB][LB][NB], psb_, MGT)));
                         }
                     }
                 }
@@ -133,43 +133,4 @@ void Matrix_Orbs21_r::init_radial_table()
         }
     }
     ModuleBase::timer::tick("Matrix_Orbs21", "init_radial_table");
-}
-
-Numerical_Orbital_Lm Matrix_Orbs21_r::construct_orb_r(const LCAO_Orbitals& orb)
-{
-    ModuleBase::TITLE("Matrix_Orbs21_r", "construct_orb_r");
-    ModuleBase::timer::tick("Matrix_Orbs21_r", "construct_orb_r");
-    int orb_r_ntype = 0;
-    int mat_Nr = orb.Phi[0].PhiLN(0, 0).getNr();
-    int count_Nr = 0;
-    Numerical_Orbital_Lm orb_rs;
-
-    for (int T = 0; T < orb.get_ntype(); ++T)
-    {
-        count_Nr = orb.Phi[T].PhiLN(0, 0).getNr();
-        if (count_Nr > mat_Nr)
-        {
-            mat_Nr = count_Nr;
-            orb_r_ntype = T;
-        }
-    }
-
-    orb_rs.set_orbital_info(this->orbs[orb_r_ntype][0][0].getLabel(),  // atom label
-                                 orb_r_ntype,                               // atom type
-                                 1,                                         // angular momentum L
-                                 1,                                         // number of orbitals of this L , just N
-                                 this->orbs[orb_r_ntype][0][0].getNr(),     // number of radial mesh
-                                 this->orbs[orb_r_ntype][0][0].getRab(),    // the mesh interval in radial mesh
-                                 this->orbs[orb_r_ntype][0][0].getRadial(), // radial mesh value(a.u.)
-                                 Numerical_Orbital_Lm::Psi_Type::Psi,
-                                 this->orbs[orb_r_ntype][0][0].getRadial(), // radial wave function
-                                 this->orbs[orb_r_ntype][0][0].getNk(),
-                                 this->orbs[orb_r_ntype][0][0].getDk(),
-                                 this->orbs[orb_r_ntype][0][0].getDruniform(),
-                                 false,
-                                 true,
-                                 PARAM.inp.cal_force);
-
-    ModuleBase::timer::tick("Matrix_Orbs21_r", "construct_orb_r");
-    return orb_rs
 }

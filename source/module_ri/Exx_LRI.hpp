@@ -237,7 +237,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const int istep, const bool write_cv)
             {
                 Vrs_sr = this->sr_cv.cal_Vrs(list_As_Vs.first, list_As_Vs.second[0], {{"writable_dVrws", true}});
                 Vrs_sr = LRI_CV_Tools::mul2(RI::Global_Func::convert<Tdata>(-this->info.hybrid_beta), Vrs_sr);
-                this->sr_cv.dVrws = LRI_CV_Tools::get_dCVws(dVs_sr);
+                this->sr_cv.Vrws = LRI_CV_Tools::get_dCVws(Vrs_sr);
             }
             // const double chi = 1.0 / this->lambda;
             // dVs = this->evq.cal_dVs(chi, dVs);

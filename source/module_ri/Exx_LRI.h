@@ -67,11 +67,13 @@ public:
 	ModuleBase::matrix force_exx;
 	ModuleBase::matrix stress_exx;
     
+    MPI_Comm mpi_comm;
+    const Exx_Info::Exx_Info_RI& info;
+    RI::Exx<TA, Tcell, Ndim, Tdata> exx_lri;
 
   private:
-    const Exx_Info::Exx_Info_RI& info;
+    
     const Exx_Info::Exx_Info_Ewald& info_ewald;
-    MPI_Comm mpi_comm;
     const K_Vectors* p_kv = nullptr;
     ORB_gaunt_table MGT;
     std::vector<double> orb_cutoff_;
@@ -82,7 +84,6 @@ public:
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp_sr;
     LRI_CV<Tdata> cv;
     LRI_CV<Tdata> sr_cv;
-    RI::Exx<TA, Tcell, Ndim, Tdata> exx_lri;
     Ewald_Vq<Tdata> evq;
 
 	void cal_exx_ions(const int istep, const bool write_cv = false);
