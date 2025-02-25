@@ -40,7 +40,7 @@ std::array<RI::Tensor<Tdata>, 3> Matrix_Orbs21_r::cal_overlap_matrix(
     }
     double factor = sqrt(ModuleBase::FOUR_PI / 3.0);
 
-    for (const auto& co3: this->center2_orb11.at(TA).at(TB))
+    for (const auto& co3: this->center2_orb21_r.at(TA).at(TB))
     {
         const int LA = co3.first;
         for (const auto& co4: co3.second)
@@ -57,13 +57,8 @@ std::array<RI::Tensor<Tdata>, 3> Matrix_Orbs21_r::cal_overlap_matrix(
                         for (size_t MB = 0; MB != 2 * LB + 1; ++MB)
                         {
                             std::array<Tdata, 3> overlap;
-
-                            const Tdata overlap_o = co6.second.cal_overlap(tauA * GlobalC::ucell.lat0,
-                                                                           tauB * GlobalC::ucell.lat0,
-                                                                           MA,
-                                                                           MB);
                             overlap[0] = -1 * factor
-                                               * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(
+                                               * co6.second.cal_overlap(
                                                    tauA * GlobalC::ucell.lat0,
                                                    tauB * GlobalC::ucell.lat0,
                                                    MA,
@@ -71,7 +66,7 @@ std::array<RI::Tensor<Tdata>, 3> Matrix_Orbs21_r::cal_overlap_matrix(
                                                    MB); // m =  1
 
                             overlap[1]  = -1 * factor
-                                               * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(
+                                               * co6.second.cal_overlap(
                                                    tauA * GlobalC::ucell.lat0,
                                                    tauB * GlobalC::ucell.lat0,
                                                    MA,
@@ -79,7 +74,7 @@ std::array<RI::Tensor<Tdata>, 3> Matrix_Orbs21_r::cal_overlap_matrix(
                                                    MB); // m = -1
 
                             overlap[2] = factor
-                                               * this->center2_orb21_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(
+                                               * co6.second.cal_overlap(
                                                    tauA * GlobalC::ucell.lat0,
                                                    tauB * GlobalC::ucell.lat0,
                                                    MA,
@@ -89,14 +84,13 @@ std::array<RI::Tensor<Tdata>, 3> Matrix_Orbs21_r::cal_overlap_matrix(
                             const size_t iB = index_B[TB][LB][NB][MB];
                             for (size_t i = 0; i < m.size(); ++i)
                             {
-                                const Tdata res = overlap[i] + RI::Global_Func::convert<Tdata>(tauA[i] * GlobalC::ucell.lat0) * overlap_o;
                                 switch (matrix_order)
                                 {
                                 case Matrix_Orbs11::Matrix_Order::AB:
-                                    m[i](iA, iB) = res;
+                                    m[i](iA, iB) = overlap[i];
                                     break;
                                 case Matrix_Orbs11::Matrix_Order::BA:
-                                    m[i](iB, iA) = res;
+                                    m[i](iB, iA) = overlap[i];
                                     break;
                                 default:
                                     throw std::invalid_argument(std::string(__FILE__) + " line "

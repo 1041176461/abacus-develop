@@ -48,11 +48,6 @@ class Matrix_Orbs21_r
     ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
     std::map<
         size_t,
-        std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, Center2_Orb::Orb11>>>>>>
-        center2_orb11;
-
-    std::map<
-        size_t,
         std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, Center2_Orb::Orb21>>>>>>
         center2_orb21_r;
 };
