@@ -46,6 +46,7 @@ class Matrix_Orbs21_r
 
   private:
     ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
+    Numerical_Orbital_Lm orb_r;
     std::map<
         size_t,
         std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, Center2_Orb::Orb21>>>>>>

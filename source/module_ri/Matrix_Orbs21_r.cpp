@@ -4,6 +4,7 @@
 //=======================
 
 #include "Matrix_Orbs21_r.h"
+
 #include "exx_abfs-construct_orbs.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
@@ -61,7 +62,7 @@ void Matrix_Orbs21_r::init_radial(const std::vector<std::vector<std::vector<Nume
 {
     ModuleBase::TITLE("Matrix_Orbs21_r", "init_radial");
     ModuleBase::timer::tick("Matrix_Orbs21_r", "init_radial");
-    Numerical_Orbital_Lm orb_r = Exx_Abfs::Construct_Orbs::construct_orb_r(orb_A);
+    this->orb_r = Exx_Abfs::Construct_Orbs::construct_orb_r(orb_A);
     for (size_t TA = 0; TA != orb_A.size(); ++TA)
     {
         for (size_t TB = 0; TB != orb_B.size(); ++TB)
@@ -76,7 +77,7 @@ void Matrix_Orbs21_r::init_radial(const std::vector<std::vector<std::vector<Nume
                         {
                             this->center2_orb21_r[TA][TB][LA][NA][LB].insert(std::make_pair(
                                 NB,
-                                Center2_Orb::Orb21(orb_A[TA][LA][NA], orb_r, orb_B[TB][LB][NB], psb_, MGT)));
+                                Center2_Orb::Orb21(orb_A[TA][LA][NA], this->orb_r, orb_B[TB][LB][NB], psb_, MGT)));
                         }
                     }
                 }
