@@ -73,6 +73,12 @@ void Center2_Orb::init_Lmax(const int orb_num,
             Lmax = std::max(Lmax, Lmax_exx);
             Lmax_used += Lmax_exx;
             break;
+        case 2: // <Abfs|r|Abfs>
+            Lmax = std::max(Lmax, 1);
+            Lmax_used = 2 * Lmax + 1;
+            Lmax = std::max(Lmax, Lmax_exx);
+            Lmax_used += 2 * Lmax_exx;
+            break;
         default:
             throw std::invalid_argument("Center2_Orb::init_Lmax orb_num=3, mode error");
             break;
