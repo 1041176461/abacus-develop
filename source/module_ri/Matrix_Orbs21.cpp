@@ -32,7 +32,7 @@ void Matrix_Orbs21::init(
     int Rmesh = static_cast<int>(rmax / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
-    Center2_Orb::init_Table_Spherical_Bessel(3,
+    Center2_Orb::init_Table_Spherical_Bessel(2,
                                              mode,
                                              Lmax_used,
                                              Lmax,
