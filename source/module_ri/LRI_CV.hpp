@@ -311,29 +311,87 @@ To11 LRI_CV<Tdata>::DPcal_o11(const int it0,
 }
 
 template <typename Tdata>
-RI::Tensor<Tdata> LRI_CV<Tdata>::DPcal_V(
-    const int it0,
-    const int it1,
-    const Abfs::Vector3_Order<double>& R,
-    const std::map<std::string, bool>& flags) // "writable_Vws"
+template <typename To11, typename Tfunc>
+To11 LRI_CV<Tdata>::DPcal_o11_r(const int it0,
+                                const int it1,
+                                const Abfs::Vector3_Order<double>& R,
+                                const bool& flag_writable_o11ws,
+                                pthread_rwlock_t& rwlock_o11,
+                                std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, To11>>>& o11ws,
+                                const Tfunc& func_cal_o11)
 {
-    const auto cal_overlap_matrix
-        = std::bind(&Matrix_Orbs11::cal_overlap_matrix<Tdata>,
-                    &this->m_abfs_abfs,
-                    std::placeholders::_1,
-                    std::placeholders::_2,
-                    std::placeholders::_3,
-                    std::placeholders::_4,
-                    std::placeholders::_5,
-                    std::placeholders::_6,
-                    std::placeholders::_7);
-    return this->DPcal_o11(it0,
-                           it1,
-                           R,
-                           flags.at("writable_Vws"),
-                           this->rwlock_Vw,
-                           this->Vws,
-                           cal_overlap_matrix);
+    using namespace RI::Array_Operator;
+    const Abfs::Vector3_Order<double> Rm = -R;
+    pthread_rwlock_rdlock(&rwlock_o11);
+    const To11 o11_read = RI::Global_Func::find(o11ws, it0, it1, R);
+    pthread_rwlock_unlock(&rwlock_o11);
+
+    if (LRI_CV_Tools::exist(o11_read))
+    {
+        return o11_read;
+    }
+    else
+    {
+        pthread_rwlock_rdlock(&rwlock_o11);
+        const To11 o11_transform_read = RI::Global_Func::find(o11ws, it1, it0, Rm);
+        pthread_rwlock_unlock(&rwlock_o11);
+
+        if (LRI_CV_Tools::exist(o11_transform_read))
+        {
+            const To11 o11 = LRI_CV_Tools::transform_Rm(o11_transform_read);
+            if (flag_writable_o11ws) // such write may be deleted for memory
+                                     // saving with transform_Rm() every time
+            {
+                pthread_rwlock_wrlock(&rwlock_o11);
+                o11ws[it0][it1][R] = o11;
+                pthread_rwlock_unlock(&rwlock_o11);
+            }
+            return o11;
+        }
+        else
+        {
+            const To11 o12 = func_cal_o11(it0,
+                                          it1,
+                                          ModuleBase::Vector3<double>{0, 0, 0},
+                                          R,
+                                          this->index_abfs,
+                                          this->index_abfs,
+                                          Matrix_Orbs11::Matrix_Order::AB);
+            const To11 o21 = func_cal_o11(it1,
+                                          it0,
+                                          R,
+                                          ModuleBase::Vector3<double>{0, 0, 0},
+                                          this->index_abfs,
+                                          this->index_abfs,
+                                          Matrix_Orbs11::Matrix_Order::BA);
+            const To11 o11 = o12 - o21;
+            if (flag_writable_o11ws)
+            {
+                pthread_rwlock_wrlock(&rwlock_o11);
+                o11ws[it0][it1][R] = o11;
+                pthread_rwlock_unlock(&rwlock_o11);
+            }
+            return o11;
+        } // end else (!exist(o11_transform_read))
+    } // end else (!exist(o11_read))
+}
+
+template <typename Tdata>
+RI::Tensor<Tdata> LRI_CV<Tdata>::DPcal_V(const int it0,
+                                         const int it1,
+                                         const Abfs::Vector3_Order<double>& R,
+                                         const std::map<std::string, bool>& flags) // "writable_Vws"
+{
+    const auto cal_overlap_matrix = std::bind(&Matrix_Orbs11::cal_overlap_matrix<Tdata>,
+                                              &this->m_abfs_abfs,
+                                              std::placeholders::_1,
+                                              std::placeholders::_2,
+                                              std::placeholders::_3,
+                                              std::placeholders::_4,
+                                              std::placeholders::_5,
+                                              std::placeholders::_6,
+                                              std::placeholders::_7);
+    return this->DPcal_o11(it0, it1, R, flags.at("writable_Vws"), this->rwlock_Vw, this->Vws, cal_overlap_matrix);
 }
 
 template <typename Tdata>
@@ -342,8 +400,6 @@ std::array<RI::Tensor<Tdata>, 3> LRI_CV<Tdata>::DPcal_Vr(const int it0,
                                                          const Abfs::Vector3_Order<double>& R,
                                                          const std::map<std::string, bool>& flags) // "writable_Vws"
 {
-    using namespace RI::Array_Operator;
-    const Abfs::Vector3_Order<double> Rm = -R;
     const auto cal_overlap_matrix = std::bind(&Matrix_Orbs21_r::cal_overlap_matrix<Tdata>,
                                               &this->m_abfs_r_abfs,
                                               std::placeholders::_1,
@@ -354,13 +410,8 @@ std::array<RI::Tensor<Tdata>, 3> LRI_CV<Tdata>::DPcal_Vr(const int it0,
                                               std::placeholders::_6,
                                               std::placeholders::_7);
 
-    const std::array<RI::Tensor<Tdata>, 3> A
-        = this->DPcal_o11(it0, it1, R, flags.at("writable_Vrws"), this->rwlock_Vrw, this->Vrws, cal_overlap_matrix);
-    const std::array<RI::Tensor<Tdata>, 3> B = LRI_CV_Tools::negative(LRI_CV_Tools::transform_Rm(A));
-    
-    return B - A;
+    return this->DPcal_o11_r(it0, it1, R, flags.at("writable_Vrws"), this->rwlock_Vrw, this->Vrws, cal_overlap_matrix);
 }
-
 
 template <typename Tdata>
 std::array<RI::Tensor<Tdata>, 3> LRI_CV<Tdata>::DPcal_dV(const int it0,

@@ -7,8 +7,8 @@
 #define LRI_CV_H
 
 #include "Matrix_Orbs11.h"
-#include "Matrix_Orbs21_r.h"
 #include "Matrix_Orbs21.h"
+#include "Matrix_Orbs21_r.h"
 #include "module_base/abfs-vector3_order.h"
 #include "module_base/element_basis_index.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
@@ -51,10 +51,10 @@ class LRI_CV
         const std::vector<TA>& list_A0,
         const std::vector<TAC>& list_A1,
         const std::map<std::string, bool>& flags); // "writable_dVws"
-    inline std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>
-        cal_Vrs(const std::vector<TA>& list_A0,
-                const std::vector<TAC>& list_A1,
-                const std::map<std::string, bool>& flags); // "writable_Vrws"
+    inline std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>> cal_Vrs(
+        const std::vector<TA>& list_A0,
+        const std::vector<TAC>& list_A1,
+        const std::map<std::string, bool>& flags); // "writable_Vrws"
     std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>,
               std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>>
         cal_Cs_dCs(const std::vector<TA>& list_A0,
@@ -114,11 +114,10 @@ class LRI_CV
                                      const int it1,
                                      const Abfs::Vector3_Order<double>& R,
                                      const std::map<std::string, bool>& flags); // "writable_Vws"
-    inline std::array<RI::Tensor<Tdata>, 3> DPcal_Vr(
-        const int it0,
-        const int it1,
-        const Abfs::Vector3_Order<double>& R,
-        const std::map<std::string, bool>& flags); // "writable_Vrws"
+    inline std::array<RI::Tensor<Tdata>, 3> DPcal_Vr(const int it0,
+                                                     const int it1,
+                                                     const Abfs::Vector3_Order<double>& R,
+                                                     const std::map<std::string, bool>& flags); // "writable_Vrws"
     inline std::array<RI::Tensor<Tdata>, 3> DPcal_dV(const int it0,
                                                      const int it1,
                                                      const Abfs::Vector3_Order<double>& R,
@@ -138,6 +137,15 @@ class LRI_CV
                    pthread_rwlock_t& rwlock_o11,
                    std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, To11>>>& o11ws,
                    const Tfunc& func_cal_o11);
+
+    template <typename To11, typename Tfunc>
+    To11 DPcal_o11_r(const int it0,
+                     const int it1,
+                     const Abfs::Vector3_Order<double>& R,
+                     const bool& flag_writable_o11ws,
+                     pthread_rwlock_t& rwlock_o11,
+                     std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, To11>>>& o11ws,
+                     const Tfunc& func_cal_o11);
 };
 
 #include "LRI_CV.hpp"
