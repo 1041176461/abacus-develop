@@ -28,6 +28,7 @@ void ModuleIO::cal_current_exx(
 {
     ModuleBase::TITLE("ModuleIO","cal_current_exx");
 	ModuleBase::timer::tick("ModuleIO", "cal_current_exx");
+
     // gamma_only and symmetry are not supported by tddft here
     constexpr std::size_t ndim = 3;
     const int& nk = kv.get_nks() / PARAM.inp.nspin;
@@ -38,6 +39,7 @@ void ModuleIO::cal_current_exx(
                     Ds = RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(kv, DMk_trans_pointer, *dm.get_paraV_pointer(), PARAM.inp.nspin);
     std::vector<std::vector<std::map<int, std::map<std::pair<int, std::array<int, ndim>>, RI::Tensor<std::complex<double>>>>>> Hexxs;
     Hexxs.resize(3);
+    std::complex<double> unit = std::complex<double>{0, 1};
     for (size_t i = 0; i!=ndim; ++i)
     {
         Hexxs[i].resize(PARAM.inp.nspin);
@@ -47,11 +49,11 @@ void ModuleIO::cal_current_exx(
         {
             exx.exx_lri_td[i].set_Ds(Ds[is], GlobalC::exx_info.info_ri.dm_threshold);
             exx.exx_lri_td[i].cal_Hs();
-            Hexxs[i][is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
-                    exx.mpi_comm, std::move(exx.exx_lri.Hs), std::get<0>(judge[is]), std::get<1>(judge[is]));
+            Hexxs[i][is] = LRI_CV_Tools::mul2(unit, RI::Communicate_Tensors_Map_Judge::comm_map2_first(
+                    exx.mpi_comm, std::move(exx.exx_lri.Hs), std::get<0>(judge[is]), std::get<1>(judge[is])));
             RI_2D_Comm::add_HexxR(
                 is,
-                1.0,
+                - 1.0,
                 Hexxs[i],
                 *pv,
                 PARAM.globalv.npol,
