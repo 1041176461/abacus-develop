@@ -41,13 +41,12 @@ void ModuleIO::cal_current_exx(
     for (size_t i = 0; i!=ndim; ++i)
     {
         Hexxs[i].resize(PARAM.inp.nspin);
-        exx.reset_Vs(exx.Vrs_order[i]);
         const std::vector<std::tuple<std::set<int>, std::set<int>>> judge
             = RI_2D_Comm::get_2D_judge(*pv);
         for(int is=0; is<PARAM.inp.nspin; ++is)
         {
-            exx.exx_lri.set_Ds(Ds[is], GlobalC::exx_info.info_ri.dm_threshold);
-            exx.exx_lri.cal_Hs();
+            exx.exx_lri_td[i].set_Ds(Ds[is], GlobalC::exx_info.info_ri.dm_threshold);
+            exx.exx_lri_td[i].cal_Hs();
             Hexxs[i][is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
                     exx.mpi_comm, std::move(exx.exx_lri.Hs), std::get<0>(judge[is]), std::get<1>(judge[is]));
             RI_2D_Comm::add_HexxR(

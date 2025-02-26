@@ -225,37 +225,6 @@ void Exx_LRI<Tdata>::cal_exx_ions(const int istep, const bool write_cv)
     }
     this->exx_lri.set_Vs(std::move(Vs), this->info.V_threshold);
 
-    if (PARAM.inp.td_vext && PARAM.inp.out_current)
-    {
-        std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> Vrs
-            = this->cv.cal_Vrs(list_As_Vs.first, list_As_Vs.second[0], {{"writable_Vrws", true}});
-        this->cv.Vrws = LRI_CV_Tools::get_dCVws(Vrs);
-        if (this->info_ewald.use_ewald)
-        {
-            std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> Vrs_sr;
-            if (this->info.hybrid_beta)
-            {
-                Vrs_sr = this->sr_cv.cal_Vrs(list_As_Vs.first, list_As_Vs.second[0], {{"writable_Vrws", true}});
-                Vrs_sr = LRI_CV_Tools::mul2(RI::Global_Func::convert<Tdata>(-this->info.hybrid_beta), Vrs_sr);
-                this->sr_cv.Vrws = LRI_CV_Tools::get_dCVws(Vrs_sr);
-            }
-            // const double chi = 1.0 / this->lambda;
-            // dVs = this->evq.cal_dVs(chi, dVs);
-            std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> Vrs_full
-                = LRI_CV_Tools::mul2(RI::Global_Func::convert<Tdata>(this->info.hybrid_alpha), Vrs);
-            Vrs = this->info.hybrid_beta ? LRI_CV_Tools::minus(Vrs_full, Vrs_sr) : Vrs_full;
-        }
-        else
-        {
-            const double coeff = (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Cam
-                              || GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Ccp)
-                                 ? 1.0
-                                 : GlobalC::exx_info.info_global.hybrid_alpha;
-            Vrs = LRI_CV_Tools::mul2(RI::Global_Func::convert<Tdata>(coeff), Vrs);
-        }
-        Vrs_order = LRI_CV_Tools::change_order(std::move(Vrs));
-    }
-
     if (PARAM.inp.cal_force || PARAM.inp.cal_stress)
     {
         std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs
@@ -325,6 +294,45 @@ void Exx_LRI<Tdata>::cal_exx_ions(const int istep, const bool write_cv)
             this->exx_lri.set_dCRs(std::move(dCRs), this->info.C_grad_R_threshold);
         }
     }
+
+    if (PARAM.inp.td_vext && PARAM.inp.out_current)
+    {
+        std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> Vrs
+            = this->cv.cal_Vrs(list_As_Vs.first, list_As_Vs.second[0], {{"writable_Vrws", true}});
+        this->cv.Vrws = LRI_CV_Tools::get_dCVws(Vrs);
+        if (this->info_ewald.use_ewald)
+        {
+            std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> Vrs_sr;
+            if (this->info.hybrid_beta)
+            {
+                Vrs_sr = this->sr_cv.cal_Vrs(list_As_Vs.first, list_As_Vs.second[0], {{"writable_Vrws", true}});
+                Vrs_sr = LRI_CV_Tools::mul2(RI::Global_Func::convert<Tdata>(-this->info.hybrid_beta), Vrs_sr);
+                this->sr_cv.Vrws = LRI_CV_Tools::get_dCVws(Vrs_sr);
+            }
+            // const double chi = 1.0 / this->lambda;
+            // dVs = this->evq.cal_dVs(chi, dVs);
+            std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> Vrs_full
+                = LRI_CV_Tools::mul2(RI::Global_Func::convert<Tdata>(this->info.hybrid_alpha), Vrs);
+            Vrs = this->info.hybrid_beta ? LRI_CV_Tools::minus(Vrs_full, Vrs_sr) : Vrs_full;
+        }
+        else
+        {
+            const double coeff = (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Cam
+                              || GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Ccp)
+                                 ? 1.0
+                                 : GlobalC::exx_info.info_global.hybrid_alpha;
+            Vrs = LRI_CV_Tools::mul2(RI::Global_Func::convert<Tdata>(coeff), Vrs);
+        }
+        std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim> Vrs_order = LRI_CV_Tools::change_order(std::move(Vrs));
+
+        for (size_t i = 0; i!=3; ++i)
+        {
+            this->exx_lri_td[i].set_parallel(this->mpi_comm, atoms_pos, latvec, period);
+            this->exx_lri_td[i].set_Vs(std::move(Vrs_order[i]), this->info.V_threshold);
+            this->exx_lri_td[i].set_Cs(std::move(Cs), this->info.C_threshold);
+        }
+    }
+
     ModuleBase::timer::tick("Exx_LRI", "cal_exx_ions");
 }
 

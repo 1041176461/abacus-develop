@@ -62,7 +62,6 @@ public:
     std::vector<std::vector<int>> get_abfs_nchis() const;
 
     std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Hexxs;
-    std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim> Vrs_order;
     double Eexx;
 	ModuleBase::matrix force_exx;
 	ModuleBase::matrix stress_exx;
@@ -70,6 +69,7 @@ public:
     MPI_Comm mpi_comm;
     const Exx_Info::Exx_Info_RI& info;
     RI::Exx<TA, Tcell, Ndim, Tdata> exx_lri;
+    std::array<RI::Exx<TA, Tcell, Ndim, Tdata>, Ndim> exx_lri_td;
 
   private:
     
