@@ -14,7 +14,7 @@ void Matrix_Orbs21_r::init(const int mode,
                            const LCAO_Orbitals& orb,
                            const double kmesh_times,
                            const double rmax,
-                           int Lmax)
+                           int& Lmax)
 {
     ModuleBase::TITLE("Matrix_Orbs21_r", "init");
     ModuleBase::timer::tick("Matrix_Orbs21_r", "init");

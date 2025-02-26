@@ -9,7 +9,7 @@
 #include "module_base/tool_title.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-void Matrix_Orbs11::init(const int mode, const LCAO_Orbitals& orb, const double kmesh_times, const double rmax, int Lmax)
+void Matrix_Orbs11::init(const int mode, const LCAO_Orbitals& orb, const double kmesh_times, const double rmax, int& Lmax)
 {
     ModuleBase::TITLE("Matrix_Orbs11", "init");
     ModuleBase::timer::tick("Matrix_Orbs11", "init");

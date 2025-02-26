@@ -74,7 +74,7 @@ void LRI_CV<Tdata>::set_orbitals(const LCAO_Orbitals& orb,
         this->m_abfslcaos_lcaos.init(1, orb, kmesh_times, lcaos_rmax, Lmax_c);
     int Lmax_vr = std::numeric_limits<double>::min();
     if (init_Vr)
-        this->m_abfs_r_abfs.init(3, orb, kmesh_times, lcaos_rmax + abfs_ccp_rmax, Lmax_vr);
+        this->m_abfs_r_abfs.init(2, orb, kmesh_times, lcaos_rmax + abfs_ccp_rmax, Lmax_vr);
     int Lmax = std::max({Lmax_v, Lmax_c, Lmax_vr});
 
     if (init_MGT)
