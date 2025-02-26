@@ -25,6 +25,7 @@ LRI_CV<Tdata>::LRI_CV()
     pthread_rwlock_init(&rwlock_Cw, NULL);
     pthread_rwlock_init(&rwlock_dVw, NULL);
     pthread_rwlock_init(&rwlock_dCw, NULL);
+    pthread_rwlock_init(&rwlock_Vrw, NULL);
 }
 
 template <typename Tdata>
@@ -34,6 +35,7 @@ LRI_CV<Tdata>::~LRI_CV()
     pthread_rwlock_destroy(&rwlock_Cw);
     pthread_rwlock_destroy(&rwlock_dVw);
     pthread_rwlock_destroy(&rwlock_dCw);
+    pthread_rwlock_destroy(&rwlock_Vrw);
 }
 
 template <typename Tdata>
