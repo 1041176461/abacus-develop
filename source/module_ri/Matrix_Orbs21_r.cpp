@@ -75,6 +75,9 @@ void Matrix_Orbs21_r::init_radial(const std::vector<std::vector<std::vector<Nume
                     {
                         for (size_t NB = 0; NB != orb_B[TB][LB].size(); ++NB)
                         {
+                            this->center2_orb11_r[TA][TB][LA][NA][LB].insert(
+                                std::make_pair(NB, Center2_Orb::Orb11(orb_A[TA][LA][NA], orb_B[TB][LB][NB], psb_, MGT)));
+
                             this->center2_orb21_r[TA][TB][LA][NA][LB].insert(std::make_pair(
                                 NB,
                                 Center2_Orb::Orb21(orb_A[TA][LA][NA], this->orb_r, orb_B[TB][LB][NB], psb_, MGT)));
@@ -91,6 +94,27 @@ void Matrix_Orbs21_r::init_radial_table()
 {
     ModuleBase::TITLE("Matrix_Orbs21_r", "init_radial_table");
     ModuleBase::timer::tick("Matrix_Orbs21_r", "init_radial_table");
+
+    for (auto& co1: this->center2_orb11_r)
+    {
+        for (auto& co2: co1.second)
+        {
+            for (auto& co3: co2.second)
+            {
+                for (auto& co4: co3.second)
+                {
+                    for (auto& co5: co4.second)
+                    {
+                        for (auto& co6: co5.second)
+                        {
+                            co6.second.init_radial_table();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     for (auto& co1: this->center2_orb21_r)
     {
         for (auto& co2: co1.second)

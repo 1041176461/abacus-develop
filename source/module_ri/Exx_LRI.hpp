@@ -309,8 +309,6 @@ void Exx_LRI<Tdata>::cal_exx_ions(const int istep, const bool write_cv)
                 Vrs_sr = LRI_CV_Tools::mul2(RI::Global_Func::convert<Tdata>(-this->info.hybrid_beta), Vrs_sr);
                 this->sr_cv.Vrws = LRI_CV_Tools::get_dCVws(Vrs_sr);
             }
-            // const double chi = 1.0 / this->lambda;
-            // dVs = this->evq.cal_dVs(chi, dVs);
             std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> Vrs_full
                 = LRI_CV_Tools::mul2(RI::Global_Func::convert<Tdata>(this->info.hybrid_alpha), Vrs);
             Vrs = this->info.hybrid_beta ? LRI_CV_Tools::minus(Vrs_full, Vrs_sr) : Vrs_full;
