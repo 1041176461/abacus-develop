@@ -150,7 +150,7 @@ auto LRI_CV<Tdata>::cal_datas(const std::vector<TA>& list_A0,
                 = -tau0 + tau1 + (RI_Util::array3_to_Vector3(cell1) * GlobalC::ucell.latvec);
             if (R_delta.norm() * GlobalC::ucell.lat0 < Rcut)
             {
-                const Tresult Data = func_DPcal_data(it0, it1, R_delta, flags);
+                const Tresult Data = func_DPcal_data(iat0, iat1, R_delta, flags);
                 //				if(Data.norm(std::numeric_limits<double>::max())
                 //> threshold)
                 //				{
@@ -255,8 +255,8 @@ auto LRI_CV<Tdata>::cal_Cs_dCs(const std::vector<TA>& list_A0,
 
 template <typename Tdata>
 template <typename To11, typename Tfunc>
-To11 LRI_CV<Tdata>::DPcal_o11(const int it0,
-                              const int it1,
+To11 LRI_CV<Tdata>::DPcal_o11(const int iat0,
+                              const int iat1,
                               const Abfs::Vector3_Order<double>& R,
                               const bool& flag_writable_o11ws,
                               pthread_rwlock_t& rwlock_o11,
@@ -264,6 +264,8 @@ To11 LRI_CV<Tdata>::DPcal_o11(const int it0,
                               const Tfunc& func_cal_o11)
 {
     const Abfs::Vector3_Order<double> Rm = -R;
+    const int it0 = GlobalC::ucell.iat2it[iat0];
+    const int it1 = GlobalC::ucell.iat2it[iat1];
     pthread_rwlock_rdlock(&rwlock_o11);
     const To11 o11_read = RI::Global_Func::find(o11ws, it0, it1, R);
     pthread_rwlock_unlock(&rwlock_o11);
@@ -312,8 +314,8 @@ To11 LRI_CV<Tdata>::DPcal_o11(const int it0,
 
 template <typename Tdata>
 template <typename To11, typename Tfunc>
-To11 LRI_CV<Tdata>::DPcal_o11_r(const int it0,
-                                const int it1,
+To11 LRI_CV<Tdata>::DPcal_o11_r(const int iat0,
+                                const int iat1,
                                 const Abfs::Vector3_Order<double>& R,
                                 const bool& flag_writable_o11ws,
                                 pthread_rwlock_t& rwlock_o11,
@@ -322,6 +324,12 @@ To11 LRI_CV<Tdata>::DPcal_o11_r(const int it0,
 {
     using namespace RI::Array_Operator;
     const Abfs::Vector3_Order<double> Rm = -R;
+    const int it0 = GlobalC::ucell.iat2it[iat0];
+    const int ia0 = GlobalC::ucell.iat2ia[iat0];
+    const int it1 = GlobalC::ucell.iat2it[iat1];
+    const int ia1 = GlobalC::ucell.iat2ia[iat1];
+    const ModuleBase::Vector3<double> tau0 = GlobalC::ucell.atoms[it0].tau[ia0];
+    const ModuleBase::Vector3<double> tau1 = GlobalC::ucell.atoms[it1].tau[ia1];
     pthread_rwlock_rdlock(&rwlock_o11);
     const To11 o11_read = RI::Global_Func::find(o11ws, it0, it1, R);
     pthread_rwlock_unlock(&rwlock_o11);
@@ -352,15 +360,15 @@ To11 LRI_CV<Tdata>::DPcal_o11_r(const int it0,
         {
             const To11 o12 = func_cal_o11(it0,
                                           it1,
-                                          ModuleBase::Vector3<double>{0, 0, 0},
-                                          R,
+                                          tau0,
+                                          R+tau0,
                                           this->index_abfs,
                                           this->index_abfs,
                                           Matrix_Orbs11::Matrix_Order::AB);
             const To11 o21 = func_cal_o11(it1,
                                           it0,
-                                          R,
-                                          ModuleBase::Vector3<double>{0, 0, 0},
+                                          R+tau0,
+                                          tau0,
                                           this->index_abfs,
                                           this->index_abfs,
                                           Matrix_Orbs11::Matrix_Order::BA);
@@ -377,8 +385,8 @@ To11 LRI_CV<Tdata>::DPcal_o11_r(const int it0,
 }
 
 template <typename Tdata>
-RI::Tensor<Tdata> LRI_CV<Tdata>::DPcal_V(const int it0,
-                                         const int it1,
+RI::Tensor<Tdata> LRI_CV<Tdata>::DPcal_V(const int iat0,
+                                         const int iat1,
                                          const Abfs::Vector3_Order<double>& R,
                                          const std::map<std::string, bool>& flags) // "writable_Vws"
 {
@@ -391,12 +399,12 @@ RI::Tensor<Tdata> LRI_CV<Tdata>::DPcal_V(const int it0,
                                               std::placeholders::_5,
                                               std::placeholders::_6,
                                               std::placeholders::_7);
-    return this->DPcal_o11(it0, it1, R, flags.at("writable_Vws"), this->rwlock_Vw, this->Vws, cal_overlap_matrix);
+    return this->DPcal_o11(iat0, iat1, R, flags.at("writable_Vws"), this->rwlock_Vw, this->Vws, cal_overlap_matrix);
 }
 
 template <typename Tdata>
-std::array<RI::Tensor<Tdata>, 3> LRI_CV<Tdata>::DPcal_Vr(const int it0,
-                                                         const int it1,
+std::array<RI::Tensor<Tdata>, 3> LRI_CV<Tdata>::DPcal_Vr(const int iat0,
+                                                         const int iat1,
                                                          const Abfs::Vector3_Order<double>& R,
                                                          const std::map<std::string, bool>& flags) // "writable_Vws"
 {
@@ -410,17 +418,19 @@ std::array<RI::Tensor<Tdata>, 3> LRI_CV<Tdata>::DPcal_Vr(const int it0,
                                               std::placeholders::_6,
                                               std::placeholders::_7);
 
-    return this->DPcal_o11_r(it0, it1, R, flags.at("writable_Vrws"), this->rwlock_Vrw, this->Vrws, cal_overlap_matrix);
+    return this->DPcal_o11_r(iat0, iat1, R, flags.at("writable_Vrws"), this->rwlock_Vrw, this->Vrws, cal_overlap_matrix);
 }
 
 template <typename Tdata>
-std::array<RI::Tensor<Tdata>, 3> LRI_CV<Tdata>::DPcal_dV(const int it0,
-                                                         const int it1,
+std::array<RI::Tensor<Tdata>, 3> LRI_CV<Tdata>::DPcal_dV(const int iat0,
+                                                         const int iat1,
                                                          const Abfs::Vector3_Order<double>& R,
                                                          const std::map<std::string, bool>& flags) // "writable_dVws"
 {
     if (ModuleBase::Vector3<double>(0, 0, 0) == R)
     {
+        const int it0 = GlobalC::ucell.iat2it[iat0];
+        const int it1 = GlobalC::ucell.iat2it[iat1];
         assert(it0 == it1);
         const size_t size = this->index_abfs[it0].count_size;
         const std::array<RI::Tensor<Tdata>, 3> dV
@@ -444,19 +454,21 @@ std::array<RI::Tensor<Tdata>, 3> LRI_CV<Tdata>::DPcal_dV(const int it0,
                                                    std::placeholders::_6,
                                                    std::placeholders::_7);
     return this
-        ->DPcal_o11(it0, it1, R, flags.at("writable_dVws"), this->rwlock_dVw, this->dVws, cal_grad_overlap_matrix);
+        ->DPcal_o11(iat0, iat1, R, flags.at("writable_dVws"), this->rwlock_dVw, this->dVws, cal_grad_overlap_matrix);
 }
 
 template <typename Tdata>
 std::pair<RI::Tensor<Tdata>, std::array<RI::Tensor<Tdata>, 3>> LRI_CV<Tdata>::DPcal_C_dC(
-    const int it0,
-    const int it1,
+    const int iat0,
+    const int iat1,
     const Abfs::Vector3_Order<double>& R,
     const std::map<std::string, bool>& flags) // "cal_dC", "writable_Cws", "writable_dCws" +
                                               // "writable_Vws", "writable_dVws"
 {
     using namespace LRI_CV_Tools;
 
+    const int it0 = GlobalC::ucell.iat2it[iat0];
+    const int it1 = GlobalC::ucell.iat2it[iat1];
     const Abfs::Vector3_Order<double> Rm = -R;
     pthread_rwlock_rdlock(&this->rwlock_Cw);
     const RI::Tensor<Tdata> C_read = RI::Global_Func::find(this->Cws, it0, it1, R);
@@ -483,7 +495,7 @@ std::pair<RI::Tensor<Tdata>, std::array<RI::Tensor<Tdata>, 3>> LRI_CV<Tdata>::DP
                                                                              this->index_lcaos,
                                                                              this->index_lcaos,
                                                                              Matrix_Orbs21::Matrix_Order::A1A2B);
-            const RI::Tensor<Tdata> V = this->DPcal_V(it0, it0, {0, 0, 0}, {{"writable_Vws", true}});
+            const RI::Tensor<Tdata> V = this->DPcal_V(iat0, iat0, {0, 0, 0}, {{"writable_Vws", true}});
             const RI::Tensor<Tdata> L = LRI_CV_Tools::cal_I(V);
 
             const RI::Tensor<Tdata> C
@@ -536,8 +548,8 @@ std::pair<RI::Tensor<Tdata>, std::array<RI::Tensor<Tdata>, 3>> LRI_CV<Tdata>::DP
                                                                               Matrix_Orbs21::Matrix_Order::A1BA2)};
 
             const std::vector<std::vector<RI::Tensor<Tdata>>> V
-                = {{DPcal_V(it0, it0, {0, 0, 0}, {{"writable_Vws", true}}), DPcal_V(it0, it1, R, flags)},
-                   {DPcal_V(it1, it0, Rm, flags), DPcal_V(it1, it1, {0, 0, 0}, {{"writable_Vws", true}})}};
+                = {{DPcal_V(iat0, iat0, {0, 0, 0}, {{"writable_Vws", true}}), DPcal_V(iat0, iat1, R, flags)},
+                   {DPcal_V(iat1, iat0, Rm, flags), DPcal_V(iat1, iat1, {0, 0, 0}, {{"writable_Vws", true}})}};
 
             const std::vector<std::vector<RI::Tensor<Tdata>>> L = LRI_CV_Tools::cal_I(V);
 
@@ -575,8 +587,8 @@ std::pair<RI::Tensor<Tdata>, std::array<RI::Tensor<Tdata>, 3>> LRI_CV<Tdata>::DP
                         this->index_lcaos,
                         Matrix_Orbs21::Matrix_Order::A1BA2))};
 
-                const std::array<RI::Tensor<Tdata>, 3> dV_01 = DPcal_dV(it0, it1, R, flags);
-                const std::array<RI::Tensor<Tdata>, 3> dV_10 = LRI_CV_Tools::negative(DPcal_dV(it1, it0, Rm, flags));
+                const std::array<RI::Tensor<Tdata>, 3> dV_01 = DPcal_dV(iat0, iat1, R, flags);
+                const std::array<RI::Tensor<Tdata>, 3> dV_10 = LRI_CV_Tools::negative(DPcal_dV(iat1, iat0, Rm, flags));
 
                 std::array<std::vector<RI::Tensor<Tdata>>,
                            3> // dC = L*(dA-dV*C)
