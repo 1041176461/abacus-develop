@@ -38,9 +38,7 @@ std::array<RI::Tensor<Tdata>, 3> Matrix_Orbs21_r::cal_overlap_matrix(
             throw std::invalid_argument(std::string(__FILE__) + " line " + std::to_string(__LINE__));
         }
     }
-    ModuleBase::Vector3<double> origin_point(0.0, 0.0, 0.0);
     double factor = sqrt(ModuleBase::FOUR_PI / 3.0);
-    const ModuleBase::Vector3<double>& distance = (tauB - tauA) * GlobalC::ucell.lat0;
 
     for (const auto& co3: this->center2_orb21_r.at(TA).at(TB))
     {
@@ -59,25 +57,32 @@ std::array<RI::Tensor<Tdata>, 3> Matrix_Orbs21_r::cal_overlap_matrix(
                         for (size_t MB = 0; MB != 2 * LB + 1; ++MB)
                         {
                             std::array<Tdata, 3> overlap;
-                            double overlap_o
-                                = this->center2_orb11_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(origin_point, distance, MA, MB);
+                            double overlap_o = this->center2_orb11_r[TA][TB][LA][NA][LB].at(NB).cal_overlap(
+                                tauA * GlobalC::ucell.lat0,
+                                tauB * GlobalC::ucell.lat0,
+                                MA,
+                                MB);
 
                             overlap[0] = -1 * factor
-                                         * co6.second.cal_overlap(origin_point,
-                                                                  distance,
+                                         * co6.second.cal_overlap(tauA * GlobalC::ucell.lat0,
+                                                                  tauB * GlobalC::ucell.lat0,
                                                                   MA,
                                                                   1,
                                                                   MB); // m =  1
 
                             overlap[1] = -1 * factor
-                                         * co6.second.cal_overlap(origin_point,
-                                                                  distance,
+                                         * co6.second.cal_overlap(tauA * GlobalC::ucell.lat0,
+                                                                  tauB * GlobalC::ucell.lat0,
                                                                   MA,
                                                                   2,
                                                                   MB); // m = -1
 
-                            overlap[2] = factor * co6.second.cal_overlap(origin_point, distance, MA, 0,
-                                                                         MB); // m =  0
+                            overlap[2] = factor
+                                         * co6.second.cal_overlap(tauA * GlobalC::ucell.lat0,
+                                                                  tauB * GlobalC::ucell.lat0,
+                                                                  MA,
+                                                                  0,
+                                                                  MB); // m =  0
                             const size_t iA = index_A[TA][LA][NA][MA];
                             const size_t iB = index_B[TB][LB][NB][MB];
                             for (size_t i = 0; i < m.size(); ++i)

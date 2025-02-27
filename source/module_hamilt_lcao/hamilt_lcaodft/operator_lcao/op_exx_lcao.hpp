@@ -14,7 +14,7 @@ namespace hamilt
     using TAC = std::pair<int, std::array<int, 3>>;
     // allocate according to the read-in HexxR, used in nscf
     template <typename Tdata, typename TR>
-    inline void reallocate_hcontainer(const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs,
+    void reallocate_hcontainer(const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs,
         HContainer<TR>* hR)
     {
         auto* pv = hR->get_paraV();
@@ -42,7 +42,7 @@ namespace hamilt
     }
     /// allocate according to BvK cells, used in scf
     template <typename TR>
-    inline void reallocate_hcontainer(const int nat, HContainer<TR>* hR,
+    void reallocate_hcontainer(const int nat, HContainer<TR>* hR,
         const std::array<int, 3>& Rs_period,
         const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest = nullptr)
     {
