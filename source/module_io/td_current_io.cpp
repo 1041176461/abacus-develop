@@ -50,7 +50,7 @@ void ModuleIO::cal_current_exx(
             exx.exx_lri_td[i].set_Ds(Ds[is], GlobalC::exx_info.info_ri.dm_threshold);
             exx.exx_lri_td[i].cal_Hs();
             Hexxs[i][is] = LRI_CV_Tools::mul2(unit, RI::Communicate_Tensors_Map_Judge::comm_map2_first(
-                    exx.mpi_comm, std::move(exx.exx_lri.Hs), std::get<0>(judge[is]), std::get<1>(judge[is])));
+                    exx.mpi_comm, std::move(exx.exx_lri_td[i].Hs), std::get<0>(judge[is]), std::get<1>(judge[is])));
             RI_2D_Comm::add_HexxR(
                 is,
                 - 1.0,
