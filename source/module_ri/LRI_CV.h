@@ -56,6 +56,9 @@ class LRI_CV
         const std::vector<TA>& list_A0,
         const std::vector<TAC>& list_A1,
         const std::map<std::string, bool>& flags); // "writable_Vrws"
+    std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>> cal_rVrs(
+        const std::vector<TA>& list_A0,
+        const std::vector<TAC>& list_A1); 
     std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>,
               std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>>
         cal_Cs_dCs(const std::vector<TA>& list_A0,
@@ -83,6 +86,7 @@ class LRI_CV
     std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, std::array<RI::Tensor<Tdata>, 3>>>> dVws;
     std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, std::array<RI::Tensor<Tdata>, 3>>>> dCws;
     std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, std::array<RI::Tensor<Tdata>, 3>>>> Vrws;
+    std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, std::array<RI::Tensor<Tdata>, 3>>>> rVrws;
 
   private:
     pthread_rwlock_t rwlock_Vw;
@@ -96,8 +100,8 @@ class LRI_CV
     Matrix_Orbs21_r m_abfs_r_abfs;
 
     template <typename Tresult>
-    using T_func_DPcal_data = std::function<Tresult(const int iat0,
-                                                    const int iat1,
+    using T_func_DPcal_data = std::function<Tresult(const int it0,
+                                                    const int it1,
                                                     const Abfs::Vector3_Order<double>& R,
                                                     const std::map<std::string, bool>& flags)>;
     using T_func_cal_Rcut = std::function<double(const int it0, const int it1)>;
@@ -111,42 +115,33 @@ class LRI_CV
     inline double cal_V_Rcut(const int it0, const int it1);
     inline double cal_C_Rcut(const int it0, const int it1);
 
-    inline RI::Tensor<Tdata> DPcal_V(const int iat0,
-                                     const int iat1,
+    inline RI::Tensor<Tdata> DPcal_V(const int it0,
+                                     const int it1,
                                      const Abfs::Vector3_Order<double>& R,
                                      const std::map<std::string, bool>& flags); // "writable_Vws"
-    inline std::array<RI::Tensor<Tdata>, 3> DPcal_Vr(const int iat0,
-                                                     const int iat1,
+    inline std::array<RI::Tensor<Tdata>, 3> DPcal_Vr(const int it0,
+                                                     const int it1,
                                                      const Abfs::Vector3_Order<double>& R,
                                                      const std::map<std::string, bool>& flags); // "writable_Vrws"
-    inline std::array<RI::Tensor<Tdata>, 3> DPcal_dV(const int iat0,
-                                                     const int iat1,
+    inline std::array<RI::Tensor<Tdata>, 3> DPcal_dV(const int it0,
+                                                     const int it1,
                                                      const Abfs::Vector3_Order<double>& R,
                                                      const std::map<std::string, bool>& flags); // "writable_dVws"
     std::pair<RI::Tensor<Tdata>, std::array<RI::Tensor<Tdata>, 3>> DPcal_C_dC(
-        const int iat0,
-        const int iat1,
+        const int it0,
+        const int it1,
         const Abfs::Vector3_Order<double>& R,
         const std::map<std::string, bool>&
             flags); // "cal_dC", "writable_Cws", "writable_dCws", "writable_Vws", "writable_dVws"
 
     template <typename To11, typename Tfunc>
-    To11 DPcal_o11(const int iat0,
-                   const int iat1,
+    To11 DPcal_o11(const int it0,
+                   const int it1,
                    const Abfs::Vector3_Order<double>& R,
                    const bool& flag_writable_o11ws,
                    pthread_rwlock_t& rwlock_o11,
                    std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, To11>>>& o11ws,
                    const Tfunc& func_cal_o11);
-
-    template <typename To11, typename Tfunc>
-    To11 DPcal_o11_r(const int iat0,
-                     const int iat1,
-                     const Abfs::Vector3_Order<double>& R,
-                     const bool& flag_writable_o11ws,
-                     pthread_rwlock_t& rwlock_o11,
-                     std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, To11>>>& o11ws,
-                     const Tfunc& func_cal_o11);
 
     //cal_r_overlap_R cal_R;
 };
