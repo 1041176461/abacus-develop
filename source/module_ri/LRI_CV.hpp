@@ -203,7 +203,7 @@ auto LRI_CV<Tdata>::cal_rVrs(const std::vector<TA>& list_A0, const std::vector<T
                     A[i] = AVr[i] + RI::Global_Func::convert<Tdata>(tau0[i] * GlobalC::ucell.lat0) * AV;
                     B[i] = BVr[i] + RI::Global_Func::convert<Tdata>((tau1 + R)[i] * GlobalC::ucell.lat0) * BV;
                 }
-                Datas[list_A0[i0]][list_A1[i1]] = -LRI_CV_Tools::transform_Rm(B) - A;
+                Datas[list_A0[i0]][list_A1[i1]] = LRI_CV_Tools::transform_Rm(B) + A;
             }
         }
     }
