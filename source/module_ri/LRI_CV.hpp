@@ -215,11 +215,10 @@ auto LRI_CV<Tdata>::cal_Vrs(const std::vector<TA>& list_A0,
                 const int ia1 = GlobalC::ucell.iat2ia[iat1];
                 const ModuleBase::Vector3<double> tau0 = GlobalC::ucell.atoms[it0].tau[ia0];
                 const ModuleBase::Vector3<double> tau1 = GlobalC::ucell.atoms[it1].tau[ia1];
-                const ModuleBase::Vector3<double> R1 = -tau0 + tau1 + (RI_Util::array3_to_Vector3(cell1) * GlobalC::ucell.latvec);
-                const Abfs::Vector3_Order<double> R = R1;
+                const Abfs::Vector3_Order<double> R = -tau0 + tau1 + (RI_Util::array3_to_Vector3(cell1) * GlobalC::ucell.latvec);
                 const Abfs::Vector3_Order<double> Rm = -R;
-                std::array<RI::Tensor<Tdata>, 3> A1 = RI::Global_Func::find(Vrws, it0, it1, R); 
-                std::array<RI::Tensor<Tdata>, 3> A2 = RI::Global_Func::find(Vrws, it1, it0, Rm);
+                std::array<RI::Tensor<Tdata>, 3> A1 = RI::Global_Func::find(this->Vrws, it0, it1, R); 
+                std::array<RI::Tensor<Tdata>, 3> A2 = RI::Global_Func::find(this->Vrws, it1, it0, Rm);
                 B[outer_pair.first][inner_pair.first] = - LRI_CV_Tools::transform_Rm(A2) - A1;
             }
     }
