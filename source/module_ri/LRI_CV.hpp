@@ -199,7 +199,31 @@ auto LRI_CV<Tdata>::cal_Vrs(const std::vector<TA>& list_A0,
                                                                                         std::placeholders::_4);
     const T_func_cal_Rcut func_cal_Rcut
         = std::bind(&LRI_CV<Tdata>::cal_V_Rcut, this, std::placeholders::_1, std::placeholders::_2);
-    return this->cal_datas(list_A0, list_A1, flags, func_cal_Rcut, func_DPcal_Vr);
+    std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>> A = this->cal_datas(list_A0, list_A1, flags, func_cal_Rcut, func_DPcal_Vr);
+    std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>> B;
+    using namespace RI::Array_Operator;
+    for (auto& outer_pair : A)
+    {
+            for (auto& inner_pair : outer_pair.second) 
+            {
+                TA iat0 = outer_pair.first;
+                TA iat1 = inner_pair.first.first;
+                const TC& cell1 = inner_pair.first.second;
+                const int it0 = GlobalC::ucell.iat2it[iat0];
+                const int ia0 = GlobalC::ucell.iat2ia[iat0];
+                const int it1 = GlobalC::ucell.iat2it[iat1];
+                const int ia1 = GlobalC::ucell.iat2ia[iat1];
+                const ModuleBase::Vector3<double> tau0 = GlobalC::ucell.atoms[it0].tau[ia0];
+                const ModuleBase::Vector3<double> tau1 = GlobalC::ucell.atoms[it1].tau[ia1];
+                const ModuleBase::Vector3<double> R1 = -tau0 + tau1 + (RI_Util::array3_to_Vector3(cell1) * GlobalC::ucell.latvec);
+                const Abfs::Vector3_Order<double> R = R1;
+                const Abfs::Vector3_Order<double> Rm = -R;
+                std::array<RI::Tensor<Tdata>, 3> A1 = RI::Global_Func::find(Vrws, it0, it1, R); 
+                std::array<RI::Tensor<Tdata>, 3> A2 = RI::Global_Func::find(Vrws, it1, it0, Rm);
+                B[outer_pair.first][inner_pair.first] = - LRI_CV_Tools::transform_Rm(A2) - A1;
+            }
+    }
+    return B;
 }
 
 template <typename Tdata>
@@ -322,7 +346,6 @@ To11 LRI_CV<Tdata>::DPcal_o11_r(const int iat0,
                                 std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, To11>>>& o11ws,
                                 const Tfunc& func_cal_o11)
 {
-    using namespace RI::Array_Operator;
     const Abfs::Vector3_Order<double> Rm = -R;
     const int it0 = GlobalC::ucell.iat2it[iat0];
     const int ia0 = GlobalC::ucell.iat2ia[iat0];
@@ -333,6 +356,8 @@ To11 LRI_CV<Tdata>::DPcal_o11_r(const int iat0,
     pthread_rwlock_rdlock(&rwlock_o11);
     const To11 o11_read = RI::Global_Func::find(o11ws, it0, it1, R);
     pthread_rwlock_unlock(&rwlock_o11);
+
+    using namespace RI::Array_Operator;
 
     if (LRI_CV_Tools::exist(o11_read))
     {
@@ -346,7 +371,7 @@ To11 LRI_CV<Tdata>::DPcal_o11_r(const int iat0,
 
         if (LRI_CV_Tools::exist(o11_transform_read))
         {
-            const To11 o11 = LRI_CV_Tools::transform_Rm(o11_transform_read);
+            const To11 o11 = - LRI_CV_Tools::transform_Rm(o11_transform_read);
             if (flag_writable_o11ws) // such write may be deleted for memory
                                      // saving with transform_Rm() every time
             {
@@ -358,21 +383,13 @@ To11 LRI_CV<Tdata>::DPcal_o11_r(const int iat0,
         }
         else
         {
-            const To11 o12 = func_cal_o11(it0,
+            const To11 o11 = func_cal_o11(it0,
                                           it1,
                                           tau0,
                                           R+tau0,
                                           this->index_abfs,
                                           this->index_abfs,
                                           Matrix_Orbs11::Matrix_Order::AB);
-            const To11 o21 = func_cal_o11(it1,
-                                          it0,
-                                          R+tau0,
-                                          tau0,
-                                          this->index_abfs,
-                                          this->index_abfs,
-                                          Matrix_Orbs11::Matrix_Order::BA);
-            const To11 o11 = o12 - o21;
             if (flag_writable_o11ws)
             {
                 pthread_rwlock_wrlock(&rwlock_o11);

@@ -50,11 +50,6 @@ class Matrix_Orbs21_r
 
     std::map<
         size_t,
-        std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, Center2_Orb::Orb11>>>>>>
-        center2_orb11_r;
-
-    std::map<
-        size_t,
         std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, Center2_Orb::Orb21>>>>>>
         center2_orb21_r;
 };

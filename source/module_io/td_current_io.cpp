@@ -14,8 +14,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 #ifdef __EXX
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_ri/Exx_LRI.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #endif
 
 #ifdef __LCAO
@@ -49,23 +49,22 @@ void ModuleIO::cal_current_exx(Exx_LRI<std::complex<double>>& exx,
     std::complex<double> unit = std::complex<double>{0, 1};
     RI::Cell_Nearest<int, int, 3, double, 3> cell_nearest;
     const bool use_cell_nearest = (ModuleBase::Vector3<double>(std::fmod(kv.get_koffset(0), 1.0),
-                                                               std::fmod(kv.get_koffset(1), 1.0),
-                                                               std::fmod(kv.get_koffset(2), 1.0))
-                                       .norm()
-                                   < 1e-10);
+                                                            std::fmod(kv.get_koffset(1), 1.0),
+                                                            std::fmod(kv.get_koffset(2), 1.0))
+                                    .norm()
+                                < 1e-10);
     const std::array<int, 3> Rs_period = {kv.nmp[0], kv.nmp[1], kv.nmp[2]};
-    if (use_cell_nearest)
-    {
-        // set cell_nearest
+    if (use_cell_nearest){             
+    // set cell_nearest
         std::map<int, std::array<double, 3>> atoms_pos;
         for (int iat = 0; iat < GlobalC::ucell.nat; ++iat)
         {
             atoms_pos[iat] = RI_Util::Vector3_to_array3(
-                GlobalC::ucell.atoms[GlobalC::ucell.iat2it[iat]].tau[GlobalC::ucell.iat2ia[iat]]);
+            GlobalC::ucell.atoms[GlobalC::ucell.iat2it[iat]].tau[GlobalC::ucell.iat2ia[iat]]);
         }
         const std::array<std::array<double, 3>, 3> latvec = {RI_Util::Vector3_to_array3(GlobalC::ucell.a1),
-                                                             RI_Util::Vector3_to_array3(GlobalC::ucell.a2),
-                                                             RI_Util::Vector3_to_array3(GlobalC::ucell.a3)};
+                                                                     RI_Util::Vector3_to_array3(GlobalC::ucell.a2),
+                                                                     RI_Util::Vector3_to_array3(GlobalC::ucell.a3)};
         cell_nearest.init(atoms_pos, latvec, Rs_period);
     }
 
@@ -164,8 +163,8 @@ void ModuleIO::write_current(const int istep,
     elecstate::cal_dm_psi(DM_real.get_paraV_pointer(), pelec->wg, psi[0], DM_real);
 
 #ifdef __EXX
-    // if (GlobalC::exx_info.info_global.cal_exx)
-    // cal_current_exx(exx_lri, DM_real, kv, pv, current_term);
+    if (GlobalC::exx_info.info_global.cal_exx)
+        cal_current_exx(exx_lri, DM_real, kv, pv, current_term);
 #endif
 
     // init DMR
@@ -251,7 +250,7 @@ void ModuleIO::write_current(const int istep,
                         }
                         // std::cout<<"mu: "<< mu <<" nu: "<< nu << std::endl;
                         // std::cout<<"dm2d1_real: "<< dm2d1_real << " dm2d1_imag: "<< dm2d1_imag << std::endl;
-                        std::cout << "rvz: " << rvz.real() << " " << rvz.imag() << std::endl;
+                        // std::cout<<"rvz: "<< rvz.real() << " " << rvz.imag() << std::endl;
                         local_current[0] -= dm2d1_real * rvx.real() - dm2d1_imag * rvx.imag();
                         local_current[1] -= dm2d1_real * rvy.real() - dm2d1_imag * rvy.imag();
                         local_current[2] -= dm2d1_real * rvz.real() - dm2d1_imag * rvz.imag();
