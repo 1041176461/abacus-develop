@@ -82,6 +82,7 @@ void ModuleIO::cal_current_exx(Exx_LRI<std::complex<double>>& exx,
                                                                                         std::move(exx.exx_lri_td[i].Hs),
                                                                                         std::get<0>(judge[is]),
                                                                                         std::get<1>(judge[is])));
+            exx.post_process_Hexx(Hexxs[i][is]);
             if (use_cell_nearest)
             {
                 hamilt::reallocate_hcontainer(GlobalC::ucell.nat, hR[i], Rs_period, &cell_nearest);
