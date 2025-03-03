@@ -332,7 +332,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const int istep, const bool write_cv)
         for (size_t i = 0; i!=3; ++i)
         {
             this->exx_lri_td[i].set_parallel(this->mpi_comm, atoms_pos, latvec, period);
-            this->exx_lri_td[i].set_Vs(std::move(rVrs_order[i]), this->info.V_threshold);
+            this->exx_lri_td[i].set_Vs(std::move(rVrs_order[i]), 0);
             this->exx_lri_td[i].set_Cs(std::move(Cs), this->info.C_threshold);
         }
     }

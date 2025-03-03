@@ -41,9 +41,9 @@ RI::Tensor<Tdata> LRI_CV_Tools::transform_Rm(const RI::Tensor<Tdata>& V) {
 template <typename Tdata>
 std::array<RI::Tensor<Tdata>, 3>
     LRI_CV_Tools::transform_Rm(const std::array<RI::Tensor<Tdata>, 3>& dV) {
-    return std::array<RI::Tensor<Tdata>, 3>{-dV[0].transpose(),
-                                            -dV[1].transpose(),
-                                            -dV[2].transpose()};
+    return std::array<RI::Tensor<Tdata>, 3>{dV[0].transpose(),
+                                            dV[1].transpose(),
+                                            dV[2].transpose()};
 }
 
 template <typename Tdata>

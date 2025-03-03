@@ -68,6 +68,24 @@ void ModuleIO::cal_current_exx(Exx_LRI<std::complex<double>>& exx,
         cell_nearest.init(atoms_pos, latvec, Rs_period);
     }
 
+    auto tensor_conj = [](const RI::Tensor<std::complex<double>>& t) {
+        RI::Tensor<std::complex<double>> r(t.shape);
+        for (int i = 0;i < t.data->size();++i) (*r.data)[i] = std::conj((*t.data)[i]);
+        return r;
+    };
+    std::vector<std::map<int, std::map<std::pair<int, std::array<int, ndim>>, RI::Tensor<std::complex<double>>>>> Ds_star;
+    Ds_star.resize(Ds.size());
+
+    for (size_t is = 0; is!=PARAM.inp.nspin; ++is)
+    {
+        for (const auto& inner_map : Ds[is]) {
+            std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>> newInnerMap;
+            for (const auto& tensor_map : inner_map.second) {
+                newInnerMap[tensor_map.first] = tensor_conj(tensor_map.second);
+            }
+            Ds_star[is][inner_map.first] = std::move(newInnerMap);
+        }
+    }
     for (size_t i = 0; i != ndim; ++i)
     {
         Hexxs[i].resize(PARAM.inp.nspin);
@@ -82,7 +100,11 @@ void ModuleIO::cal_current_exx(Exx_LRI<std::complex<double>>& exx,
                                                                                         std::move(exx.exx_lri_td[i].Hs),
                                                                                         std::get<0>(judge[is]),
                                                                                         std::get<1>(judge[is])));
-            // if k points has no shift, use cell_nearest to reduce the memory cost
+            ofh<<"direction: "<<i<<std::endl;
+            //ofh<<Hexxs[i][is]<<std::endl;
+            ofd<<"direction: "<<i<<std::endl;
+            //ofd<<Ds[is]<<std::endl;
+            
             if (use_cell_nearest)
             {
                 hamilt::reallocate_hcontainer(GlobalC::ucell.nat, hR[i], Rs_period, &cell_nearest);
@@ -211,8 +233,7 @@ void ModuleIO::write_current(const int istep,
                 double Rx = ra.info[iat][cb][0];
                 double Ry = ra.info[iat][cb][1];
                 double Rz = ra.info[iat][cb][2];
-                // std::cout<< "iat1: " << iat1 << " iat2: " << iat2 << " Rx: " << Rx << " Ry: " << Ry << " Rz:" << Rz
-                // << std::endl;
+                //std::cout<< "iat1: " << iat1 << " iat2: " << iat2 << " Rx: " << Rx << " Ry: " << Ry << " Rz:" << Rz << std::endl;
                 //   get BaseMatrix
                 hamilt::BaseMatrix<double>* tmp_matrix_real
                     = DM_real.get_DMR_pointer(1)->find_matrix(iat1, iat2, Rx, Ry, Rz);
@@ -249,9 +270,9 @@ void ModuleIO::write_current(const int istep,
                             rvy = tmp_m_rvy->get_value(mu, nu);
                             rvz = tmp_m_rvz->get_value(mu, nu);
                         }
-                        // std::cout<<"mu: "<< mu <<" nu: "<< nu << std::endl;
-                        // std::cout<<"dm2d1_real: "<< dm2d1_real << " dm2d1_imag: "<< dm2d1_imag << std::endl;
-                        // std::cout<<"rvz: "<< rvz.real() << " " << rvz.imag() << std::endl;
+                        //std::cout<<"mu: "<< mu <<" nu: "<< nu << std::endl;
+                        //std::cout<<"dm2d1_real: "<< dm2d1_real << " dm2d1_imag: "<< dm2d1_imag << std::endl;
+                        //std::cout<<"rvz: "<< rvz.real() << " " << rvz.imag() << std::endl;
                         local_current[0] -= dm2d1_real * rvx.real() - dm2d1_imag * rvx.imag();
                         local_current[1] -= dm2d1_real * rvy.real() - dm2d1_imag * rvy.imag();
                         local_current[2] -= dm2d1_real * rvz.real() - dm2d1_imag * rvz.imag();
@@ -514,8 +535,8 @@ void ModuleIO::write_current_eachk(const int istep,
                         double Rx = ra.info[iat][cb][0];
                         double Ry = ra.info[iat][cb][1];
                         double Rz = ra.info[iat][cb][2];
-                        // std::cout<< "iat1: " << iat1 << " iat2: " << iat2 << " Rx: " << Rx << " Ry: " << Ry << " Rz:"
-                        // << Rz << std::endl;
+                        //std::cout<< "iat1: " << iat1 << " iat2: " << iat2 << " Rx: " << Rx << " Ry: " << Ry << " Rz:"
+                        //<< Rz << std::endl;
                         //   get BaseMatrix
                         hamilt::BaseMatrix<double>* tmp_matrix_real
                             = DM_real.get_DMR_pointer(is)->find_matrix(iat1, iat2, Rx, Ry, Rz);
@@ -552,9 +573,9 @@ void ModuleIO::write_current_eachk(const int istep,
                                     rvy = tmp_m_rvy->get_value(mu, nu);
                                     rvz = tmp_m_rvz->get_value(mu, nu);
                                 }
-                                // std::cout<<"mu: "<< mu <<" nu: "<< nu << std::endl;
-                                // std::cout<<"dm2d1_real: "<< dm2d1_real << " dm2d1_imag: "<< dm2d1_imag << std::endl;
-                                // std::cout<<"rvz: "<< rvz.real() << " " << rvz.imag() << std::endl;
+                                //std::cout<<"mu: "<< mu <<" nu: "<< nu << std::endl;
+                                //std::cout<<"dm2d1_real: "<< dm2d1_real << " dm2d1_imag: "<< dm2d1_imag << std::endl;
+                                //std::cout<<"rvz: "<< rvz.real() << " " << rvz.imag() << std::endl;
                                 local_current_ik[0] -= dm2d1_real * rvx.real() - dm2d1_imag * rvx.imag();
                                 local_current_ik[1] -= dm2d1_real * rvy.real() - dm2d1_imag * rvy.imag();
                                 local_current_ik[2] -= dm2d1_real * rvz.real() - dm2d1_imag * rvz.imag();

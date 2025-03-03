@@ -12,7 +12,6 @@
 #include "module_base/abfs-vector3_order.h"
 #include "module_base/element_basis_index.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
-#include "module_io/cal_r_overlap_R.h"
 
 #include <RI/global/Global_Func-2.h>
 #include <RI/global/Tensor.h>
@@ -141,9 +140,8 @@ class LRI_CV
                    const bool& flag_writable_o11ws,
                    pthread_rwlock_t& rwlock_o11,
                    std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, To11>>>& o11ws,
-                   const Tfunc& func_cal_o11);
-
-    //cal_r_overlap_R cal_R;
+                   const Tfunc& func_cal_o11,
+                   const Tdata& transform_factor);
 };
 
 #include "LRI_CV.hpp"
